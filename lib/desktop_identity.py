@@ -49,7 +49,7 @@ def gs(*args):
 
 
 def apply(directory, chain, mode="watch-only"):
-    if mode not in {"watch-only", "test-signers"}:
+    if mode not in {"watch-only", "test-signer"}:
         raise RuntimeError("Unknown desktop mode")
     if os.geteuid() == 0:
         raise RuntimeError("Apply desktop preferences as the desktop user, not root")
@@ -60,7 +60,6 @@ def apply(directory, chain, mode="watch-only"):
     base = Path.home() / ".local/share/glacier2"
     base.mkdir(mode=0o700, parents=True, exist_ok=False)
     data = base / "core"
-    # Core's wallet directory is chain-specific; mainnet uses the datadir itself.
     chain_dir = data if chain == "main" else data / chain
     wallet = chain_dir / "wallets/watch_only"
     wallet.mkdir(parents=True, mode=0o700)
@@ -69,6 +68,7 @@ def apply(directory, chain, mode="watch-only"):
     (data / "bitcoin.conf").write_text("networkactive=0\nlisten=0\ndiscover=0\ndnsseed=0\nfixedseeds=0\nlistenonion=0\nnatpmp=0\nserver=0\n")
     (base / "chain").write_text(chain + "\n")
     (base / "desktop-mode").write_text(mode + "\n")
+
     uri = (directory / "wallpaper.png").as_uri()
     changes = []
     def setting(schema, key, value):
@@ -81,20 +81,20 @@ def apply(directory, chain, mode="watch-only"):
             raise RuntimeError(f"Desktop setting readback failed: {schema} {key}")
         changes.append({"schema": schema, "key": key, "previous": old, "applied": value})
         return True
+
     setting("org.gnome.desktop.background", "picture-uri", repr(uri))
     setting("org.gnome.desktop.background", "picture-uri-dark", repr(uri))
     setting("org.gnome.desktop.background", "picture-options", "'zoom'")
     schemas = gs("list-schemas").splitlines()
     if "org.gnome.desktop.screensaver" in schemas:
         setting("org.gnome.desktop.screensaver", "picture-uri", repr(uri))
-    # Modern GNOME uses a blurred desktop background at lock; text may be hidden.
-    print("Desktop set. Lock screen inherits this image on modern GNOME; text may be blurred.")
+
     desktop_id = "glacier2-bitcoin.desktop"
     applications = Path.home() / ".local/share/applications"
     applications.mkdir(parents=True, exist_ok=True)
-    if mode == "test-signers":
+    if mode == "test-signer":
         name = "Bitcoin Core — Offline Test Wallets"
-        comment = "Glacier-2 test mode: watch-only plus seven signer wallets; networking disabled"
+        comment = "Glacier-2 test mode: watch-only plus one encrypted signer wallet"
     else:
         name = "Bitcoin Core — Offline Watch Wallet"
         comment = "Glacier-2 public watch-only wallet; networking disabled"
@@ -121,15 +121,14 @@ def apply(directory, chain, mode="watch-only"):
         if desktop_id not in favorites:
             try:
                 gs("set", "org.gnome.shell", "favorite-apps", repr(favorites + [desktop_id]))
-                print("Bitcoin Core added to GNOME favorites.")
             except subprocess.CalledProcessError:
-                print("Could not pin favorites; use the installed Applications shortcut.")
+                pass
     (base / "desktop-settings.json").write_text(json.dumps(changes, indent=2) + "\n")
 
 
 if __name__ == "__main__":
     if len(sys.argv) not in {4, 5} or sys.argv[3] not in {"main", "regtest", "signet"}:
-        raise SystemExit("Usage: desktop_identity.py generate|apply DIRECTORY main|regtest|signet [watch-only|test-signers]")
+        raise SystemExit("Usage: desktop_identity.py generate|apply DIRECTORY main|regtest|signet [watch-only|test-signer]")
     action, directory, chain = sys.argv[1:4]
     if action == "generate":
         if len(sys.argv) != 4:

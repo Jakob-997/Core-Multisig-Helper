@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Production mode keeps the seven signer wallets out of the desktop account.
-# --test deliberately adds desktop copies so Bitcoin-Qt can inspect all wallets.
 desktop_user() {
     runuser -u "$DESKTOP_USER" -- env HOME="$DESKTOP_HOME" \
         XDG_RUNTIME_DIR="/run/user/$DESKTOP_UID" \
@@ -32,26 +30,27 @@ desktop_identity() {
     install -m 644 "$STATE/watch-only-desktop.dat" /opt/glacier2/identity/watch-only.dat
     install -m 644 "$ROOT/lib/desktop_identity.py" /opt/glacier2/identity/setup.py
     install -m 755 "$ROOT/lib/launch-qt.sh" /opt/glacier2/identity/launch-qt
+
     local desktop_mode=watch-only
-    if [[ $SKIP_CD == 1 ]]; then desktop_mode=test-signers; fi
+    if [[ $TEST_MODE == 1 ]]; then desktop_mode=test-signer; fi
     desktop_user python3 /opt/glacier2/identity/setup.py apply /opt/glacier2/identity "$CHAIN" "$desktop_mode"
-    if [[ $SKIP_CD == 1 ]]; then
+
+    if [[ $TEST_MODE == 1 ]]; then
         local desktop_data="$DESKTOP_HOME/.local/share/glacier2/core"
         local desktop_chain_dir="$desktop_data"
-        local desktop_wallet_dir n
+        local desktop_wallet_dir
         [[ $CHAIN == main ]] || desktop_chain_dir="$desktop_data/$CHAIN"
         desktop_wallet_dir="$desktop_chain_dir/wallets"
-        for n in {1..7}; do
-            rpc -rpcwallet="signer_$n" getwalletinfo | jq -e '.private_keys_enabled == true' >/dev/null
-            install -d -m 700 -o "$DESKTOP_UID" -g "$DESKTOP_GID" "$desktop_wallet_dir/signer_$n"
-            rpc -rpcwallet="signer_$n" backupwallet "$desktop_wallet_dir/signer_$n/wallet.dat"
-            chown "$DESKTOP_UID:$DESKTOP_GID" "$desktop_wallet_dir/signer_$n/wallet.dat"
-            chmod 600 "$desktop_wallet_dir/signer_$n/wallet.dat"
-        done
-        log 'TEST FLAG: all seven signer wallets are available to desktop Bitcoin-Qt for inspection. Do not fund this test setup.'
+        rpc -rpcwallet=signer getwalletinfo | jq -e '.private_keys_enabled == true' >/dev/null
+        install -d -m 700 -o "$DESKTOP_UID" -g "$DESKTOP_GID" "$desktop_wallet_dir/signer"
+        rpc -rpcwallet=signer backupwallet "$desktop_wallet_dir/signer/wallet.dat"
+        chown "$DESKTOP_UID:$DESKTOP_GID" "$desktop_wallet_dir/signer/wallet.dat"
+        chmod 600 "$desktop_wallet_dir/signer/wallet.dat"
+        log 'TEST MODE: encrypted signer wallet is available in desktop Bitcoin-Qt for inspection. Do not fund this setup.'
     fi
+
     cp /opt/glacier2/identity/identity.json "$STATE/public/identity.json"
     log "Recognition code: $(jq -r .code /opt/glacier2/identity/identity.json)"
     log "Background color: $(jq -r .color /opt/glacier2/identity/identity.json)"
-    log 'Record the code/color on separate paper and check lock/unlock. GNOME may blur the text. Visual cues do not prove integrity or prevent exfiltration.'
+    log 'Record the code/color on separate paper and check lock/unlock. Visual cues do not prove integrity or prevent exfiltration.'
 }

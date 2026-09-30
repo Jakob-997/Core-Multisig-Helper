@@ -8,6 +8,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install validation tools
-        run: sudo apt-get update -qq && sudo apt-get install -y shellcheck python3-pil fonts-dejavu-core
-      - name: Check scripts and unit tests (no hardening, keys, or CD writes)
+        run: sudo apt-get update -qq && sudo apt-get install -y shellcheck python3-pil fonts-dejavu-core git build-essential
+      - name: Build pinned Shamir and Bytewords helper
+        run: |
+          mkdir -p "$RUNNER_TEMP/glacier"
+          bash lib/build_shamir.sh "$RUNNER_TEMP/glacier/shamir-helper" "$RUNNER_TEMP/glacier/provenance.txt"
+      - name: Check scripts and unit tests
+        env:
+          GLACIER_SHAMIR_HELPER: ${{ runner.temp }}/glacier/shamir-helper
         run: bash tests/check.sh
