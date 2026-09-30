@@ -2,6 +2,7 @@ name: Prototype checks
 on: [push, pull_request, workflow_dispatch]
 permissions:
   contents: read
+
 jobs:
   static-and-unit:
     runs-on: ubuntu-24.04
@@ -17,3 +18,30 @@ jobs:
         env:
           GLACIER_SHAMIR_HELPER: ${{ runner.temp }}/glacier/shamir-helper
         run: bash tests/check.sh
+
+  core-regtest:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build/download tools
+        run: sudo apt-get update -qq && sudo apt-get install -y git build-essential curl ca-certificates
+      - name: Build pinned Shamir and Bytewords helper
+        run: |
+          mkdir -p "$RUNNER_TEMP/glacier"
+          bash lib/build_shamir.sh "$RUNNER_TEMP/glacier/shamir-helper" "$RUNNER_TEMP/glacier/provenance.txt"
+      - name: Download checksum-verified Bitcoin Core 32.0rc2
+        run: |
+          set -euo pipefail
+          base=https://bitcoincore.org/bin/bitcoin-core-32.0/test.rc2
+          archive=bitcoin-32.0rc2-x86_64-linux-gnu.tar.gz
+          curl --proto '=https' --tlsv1.2 -fsSLO "$base/SHA256SUMS"
+          curl --proto '=https' --tlsv1.2 -fsSLO "$base/$archive"
+          expected=$(awk -v f="$archive" '$2==f {print $1}' SHA256SUMS)
+          test "${#expected}" -eq 64
+          printf '%s  %s\n' "$expected" "$archive" | sha256sum --check --strict
+          tar -xzf "$archive" -C "$RUNNER_TEMP/glacier"
+      - name: End-to-end single-sig recovery and spend test
+        run: |
+          python3 tests/integration.py \
+            "$RUNNER_TEMP/glacier/bitcoin-32.0rc2/bin" \
+            "$RUNNER_TEMP/glacier/shamir-helper"
