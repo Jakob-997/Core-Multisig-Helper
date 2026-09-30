@@ -120,7 +120,7 @@ def import_public_pair(core, wallet, descriptors):
             raise RuntimeError("Unexpected descriptor import warning")
 
 
-def create(core, chain, public_output, recovery_output, helper, policy=None, interactive=True):
+def create(core, chain, public_output, recovery_output, helper, policy=None, interactive=True, master_secret=None):
     public_output = Path(public_output)
     recovery_output = Path(recovery_output)
     helper = Path(helper)
@@ -142,7 +142,12 @@ def create(core, chain, public_output, recovery_output, helper, policy=None, int
     public_output.mkdir(mode=0o700)
     recovery_output.mkdir(mode=0o700)
 
-    secret = bytearray(generate_master_secret())
+    if master_secret is not None:
+        if interactive or len(master_secret) != 32:
+            raise RuntimeError("Test master secret is only permitted for noninteractive 32-byte tests")
+        secret = bytearray(master_secret)
+    else:
+        secret = bytearray(generate_master_secret())
     passphrase = None
     xprv = None
     shares = None
