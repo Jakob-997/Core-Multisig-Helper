@@ -39,3 +39,21 @@ Not performed here:
 
 These remaining checks are explicit acceptance requirements in `RECOVERY.md`.
 Passing static checks and regtest is **not** approval to use meaningful funds.
+
+## Desktop identity / mainnet default update
+
+- Changed the setup default to mainnet; test networks now require an explicit option.
+- Re-ran ShellCheck, Bash syntax and Python compile/unit checks after adding the
+  desktop module. Five unit tests pass, including identity non-regeneration and
+  isolated mocked GNOME preferences/launcher/watch-copy behavior.
+- Rendered and visually inspected a 1920×1080 example recognition wallpaper.
+  Verified the stored random code/color and refusal to replace an existing identity.
+- Ran `tests/mainnet_qt.py` with the verified Core binaries, no funds and disabled
+  networking. All seven signers and the watch wallet passed mainnet BIP87
+  descriptor/address checks. Qt's supported minimal display backend opened a
+  separate watch-only backup copy, reported private keys disabled and zero peers,
+  and generated a mainnet `bc1q` address. The desktop launcher uses XCB/XWayland.
+- Actual GNOME wallpaper application, lock-screen appearance, desktop trust and
+  dock pinning remain **unverified on a physical desktop**. The settings unit test
+  uses mocks; it does not establish live desktop compatibility. Check these during
+  your hardware acceptance run. No Windows desktop settings were changed.

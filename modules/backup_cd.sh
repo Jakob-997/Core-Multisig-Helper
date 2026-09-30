@@ -12,10 +12,11 @@ backup_cd() {
         rpc -rpcwallet="signer_$n" backupwallet "$package/wallet.dat"
         [[ -s $package/wallet.dat ]] || die 'Empty backup.'
         cp "$STATE/public/manifest.json" "$STATE/public/descriptors.txt" "$package/"
+        cp "$STATE/public/identity.json" "$package/"
         cp "$ROOT/RECOVERY.md" "$package/RECOVERY.md"
         printf 'GLACIER-2 PROTOTYPE\nSigner: %s of 7\nNetwork: %s\nUNENCRYPTED PRIVATE BACKUP. Keep physically separate.\n' "$n" "$CHAIN" >"$package/DISC.txt"
-        (cd "$package" && sha256sum wallet.dat manifest.json descriptors.txt RECOVERY.md DISC.txt >SHA256SUMS)
-        [[ $(find "$package" -maxdepth 1 -type f | wc -l) == 6 ]] || die 'Unexpected files in disc package.'
+        (cd "$package" && sha256sum wallet.dat manifest.json descriptors.txt identity.json RECOVERY.md DISC.txt >SHA256SUMS)
+        [[ $(find "$package" -maxdepth 1 -type f | wc -l) == 7 ]] || die 'Unexpected files in disc package.'
         xorriso -as mkisofs -quiet -R -J -V "GLACIER2_S$n" -o "$iso" "$package"
         [[ $(stat -c %s "$iso") -lt 650000000 ]] || die 'Image too large for supported CD.'
         confirm "Insert a NEW BLANK CD-R in $DRIVE for signer $n. No rewritable media and no existing sessions. Disc will contain exactly one private signer backup." "BURN SIGNER $n"

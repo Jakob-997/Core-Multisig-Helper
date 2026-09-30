@@ -4,6 +4,11 @@ install_core() {
     case $(uname -m) in x86_64) arch=x86_64-linux-gnu;; aarch64) arch=aarch64-linux-gnu;; *) die 'Unsupported CPU.';; esac
     apt-get update
     apt-get install -y --no-install-recommends ca-certificates curl gnupg jq python3 nftables rfkill iproute2 xorriso eject kmod initramfs-tools util-linux
+    apt-get install -y --no-install-recommends python3-pil fonts-dejavu-core libglib2.0-bin xdg-user-dirs desktop-file-utils xwayland libfontconfig1 libx11-xcb1 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-xinerama0 libxcb-xkb1 libxkbcommon-x11-0 libegl1 libgl1
+    # Check the actual sudo user's desktop session before networking is disabled.
+    # shellcheck source=modules/desktop_identity.sh
+    source "$ROOT/modules/desktop_identity.sh"
+    desktop_preflight
     for name in curl gpg jq python3 nft rfkill ip xorriso eject modprobe update-initramfs; do need "$name"; done
     need update-grub
     [[ -d /etc/default/grub.d ]] || die 'A GRUB installation is required for persistent boot hardening.'

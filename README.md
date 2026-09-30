@@ -2,7 +2,8 @@
 
 **Do not use meaningful funds until destructive recovery and spend tests pass.**
 This is unaudited prototype software using Bitcoin Core **32.0rc2**, not a finished
-Glacier security procedure. Default network: **regtest**, which has no real money.
+Glacier security procedure. Default network: **Bitcoin mainnet**, creating real
+Bitcoin receive addresses. Explicit regtest/signet options remain available for tests.
 
 Seven independent HD roots are generated on **one computer**. Compromise of that
 computer can expose all seven keys. Multisig does not create independent security
@@ -13,7 +14,8 @@ backups, not BIP39 seed phrases. Protect all remaining local copies too.
 ## One copy-paste command
 
 On a **dedicated disposable Ubuntu 24.04 or 26.04 installation**, at a local
-console, with Internet initially available, `curl`, `tar`, and `sudo` installed,
+console in your logged-in GNOME desktop, with Internet initially available,
+`curl`, `tar`, and `sudo` installed,
 an optical writer at `/dev/sr0`, and seven new blank CD-Rs:
 
 ```bash
@@ -21,7 +23,7 @@ bash -c 'set -euo pipefail; d=$(mktemp -d "$HOME/glacier2-source.XXXXXX"); curl 
 ```
 
 This downloads the repository before disabling networking; the local directory
-is retained. It runs all four modules and pauses for destructive confirmations
+is retained. It runs all five modules and pauses for destructive confirmations
 and each disc. Inspect the source first when security matters. This convenience
 command trusts the current GitHub branch, GitHub/TLS, Ubuntu packages and the host.
 For reproducibility, download an independently reviewed commit archive instead.
@@ -30,10 +32,10 @@ Core binaries are separately checked against signed checksums.
 To select another network or drive after downloading, run from that source folder:
 
 ```bash
-sudo env GLACIER_CHAIN=signet GLACIER_DRIVE=/dev/sr0 bash setup.sh
+sudo env GLACIER_CHAIN=regtest GLACIER_DRIVE=/dev/sr0 bash setup.sh
 ```
 
-`GLACIER_CHAIN=main` selects mainnet and requires an extra confirmation. Neither
+Mainnet is already selected unless overridden and requires an extra confirmation. Neither
 mainnet nor signet setup synchronizes a blockchain. The offline node never needs
 the chain to generate keys. Use a separate online watch-only coordinator later.
 An existing `/var/lib/glacier2`, `/etc/glacier2`, or `/opt/glacier2` causes refusal.
@@ -48,6 +50,7 @@ Do not delete those directories to retry after keys may have been generated.
 | `modules/install_core.sh` | Dependencies, pinned 32.0rc2 download, signatures/hash, isolated install |
 | `modules/airgap.sh` | Persistent firewall, radio/service/driver blocks, interface unbinding and kernel module lock |
 | `modules/wallets.sh`, `lib/wallets.py` | Seven blank signers, BIP87 account keys, private signer descriptors, watch-only policy, Core checks |
+| `modules/desktop_identity.sh`, `lib/desktop_identity.py` | Recognition wallpaper/color/code, GNOME settings, offline Core Qt shortcut |
 | `modules/backup_cd.sh` | `backupwallet`, one signer per CD, ISO creation, physical reinsertion/readback |
 
 Core is installed under `/opt/glacier2/core`. State is root-only under
@@ -60,11 +63,47 @@ when recovering addresses beyond that range. Seven roots are created by
 only its own private account key; public outputs never include private keys.
 
 Each disc contains exactly `wallet.dat` for that signer, `descriptors.txt`,
-`manifest.json`, `RECOVERY.md`, `DISC.txt`, and `SHA256SUMS`. All seven public key
+`manifest.json`, `identity.json`, `RECOVERY.md`, `DISC.txt`, and `SHA256SUMS`. All seven public key
 records are intentionally present on every disc: recovery needs the full policy.
 Public descriptors are privacy-sensitive. Per-disc file hashes detect accidental
 corruption, not malicious replacement of both data and hashes. Verification also
 compares the readback image with the locally generated image.
+
+## Desktop identity and Bitcoin Core Qt
+
+After wallet creation, the desktop module generates an 80-bit random recognition
+code and a random dark background color locally with the operating system's
+cryptographic random generator. The wallpaper says **OFFLINE LAPTOP / COLD STORAGE**,
+shows the network, code, and color value, and asks you to compare them with a
+separate paper record. The identity is saved once under `/opt/glacier2/identity`
+and copied to every backup CD. Reruns never silently replace it.
+
+This is a visual anti-phishing cue, **not an anti-exfiltration mechanism or proof
+that the computer/software has not changed**. Malware can copy the image and code.
+Compare against your paper record, not another file on the same laptop. A mismatch
+means stop and investigate; a match does not establish trust.
+
+The module sets GNOME light/dark desktop wallpaper and the legacy lock wallpaper
+key where available. Modern GNOME uses a **blurred desktop image on the lock
+screen**, often hiding the code/text. Check both desktop and lock/unlock manually;
+the script does not remove lock-screen blur, install shell extensions, change the
+login screen, or claim the code is readable while locked. It records previous
+changed settings in `~/.local/share/glacier2/desktop-settings.json`.
+
+An Applications launcher named **Bitcoin Core — Offline Watch Wallet** is added,
+with a desktop copy where a Desktop folder exists and GNOME favorites pinning
+where allowed. Some desktops require right-click **Allow Launching**. The shortcut
+starts the verified `bitcoin-qt` with networking disabled and a separate,
+user-owned **watch-only** copy at `~/.local/share/glacier2/core`. It does not run
+Qt as root or expose the seven private signer wallets to the desktop account.
+It can display/generate real mainnet addresses, but cannot sign. Since it stays
+offline it does not provide synchronized balances. Do not open it until setup
+has finished, and never reconnect this computer. Existing installations still
+require manual review; do not rerun setup to retrofit these cues over existing keys.
+
+References: [GNOME desktop background](https://help.gnome.org/system-admin-guide/desktop-background.html),
+[legacy lock-screen setting](https://help.gnome.org/system-admin-guide/desktop-shield.html),
+[modern GNOME lock background behavior](https://mail.gnome.org/archives/commits-list/2020-February/msg11612.html).
 
 ## Verification trust
 
@@ -117,13 +156,13 @@ disc blanking, or regeneration occurs. Partial backup runs require manual review
 use existing wallets/backups and fresh media, never restart key creation.
 
 Read [RECOVERY.md](RECOVERY.md) for the destructive test checklist.
-Local, nondestructive code checks (with Bash, ShellCheck, Python, jq and xorriso):
+Local, nondestructive code checks (with Bash, ShellCheck, Python/Pillow,
+DejaVu fonts, jq and xorriso):
 
 ```bash
-shellcheck -x setup.sh lib/*.sh modules/*.sh
-for f in setup.sh lib/*.sh modules/*.sh; do bash -n "$f"; done
-python3 -m unittest discover -s tests -p 'test_*.py'
+bash tests/check.sh
 python3 tests/integration.py /path/to/verified/bitcoin-32.0rc2/bin
+python3 tests/mainnet_qt.py /path/to/verified/bitcoin-32.0rc2/bin
 ```
 
 The integration test uses a disposable regtest directory, no airgap mutations and
@@ -132,6 +171,7 @@ after ISO roundtrips, checks one signature per restored signer, rejects all 21
 two-signer combinations and checks all 35 three-signer combinations with
 `testmempoolaccept`. This does not replace actual CD, reboot or destructive recovery
 tests. See [VALIDATION.md](VALIDATION.md) for results and outstanding hardware tests.
+The mainnet Qt smoke test uses temporary wallets with networking disabled and no funds.
 
 Primary references: [Core 32.0rc2 distribution](https://bitcoincore.org/bin/bitcoin-core-32.0/test.rc2/),
 [Core verification guide](https://bitcoincore.org/en/download/),

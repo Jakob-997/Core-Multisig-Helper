@@ -9,6 +9,11 @@ is not proof of wallet recovery or spending ability. Every disc is unencrypted.
 - Record the network, Core version, both public descriptors and their checksums,
   signer numbers, seven root fingerprints/xpubs, and the receive/change sample
   addresses from `manifest.json`. Keep independent public copies.
+- Record the recognition code and color from `identity.json` on separate paper.
+  Compare them with the desktop before use; check lock/unlock behavior too. Modern
+  GNOME may blur the lock-screen text. These are copyable recognition cues, not
+  proof of integrity or protection against exfiltration. The desktop Core shortcut
+  contains only a watch-only copy; private signer recovery still uses the CDs.
 - Verify all seven physical CDs on a second optical reader: mount read-only,
   enter the disc directory, and run `sha256sum --check --strict SHA256SUMS`.
   Confirm the signer number in `DISC.txt`, that there is exactly one `wallet.dat`,

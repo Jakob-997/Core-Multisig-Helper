@@ -20,7 +20,7 @@ done
 need flock
 exec 9>/run/lock/glacier2.lock
 flock -n 9 || die 'Another Glacier runner is active.'
-CHAIN=${GLACIER_CHAIN:-regtest}
+CHAIN=${GLACIER_CHAIN:-main}
 [[ $CHAIN == regtest || $CHAIN == signet || $CHAIN == main ]] || die 'GLACIER_CHAIN must be regtest, signet or main.'
 DRIVE=${GLACIER_DRIVE:-/dev/sr0}
 [[ $DRIVE =~ ^/dev/sr[0-9]+$ && -b $DRIVE ]] || die 'Set GLACIER_DRIVE to an optical block device, for example /dev/sr0.'
@@ -34,7 +34,7 @@ trap cleanup EXIT
 trap 'log "Failure at line $LINENO (command suppressed to avoid secret disclosure)."' ERR
 printf '%s\n' "$CHAIN" >"$STATE/chain"
 printf '%s\n' "$ROOT" >"$STATE/source-location"
-for module in install_core airgap wallets backup_cd; do
+for module in install_core airgap wallets desktop_identity backup_cd; do
     log "Starting module: $module"
     # shellcheck source=/dev/null
     source "$ROOT/modules/$module.sh"
