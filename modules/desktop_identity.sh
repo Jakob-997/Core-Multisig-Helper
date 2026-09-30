@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Production mode keeps the seven signer wallets out of the desktop account.\n# --test deliberately adds desktop copies so Bitcoin-Qt can inspect all wallets.
+# Production mode keeps the seven signer wallets out of the desktop account.
+# --test deliberately adds desktop copies so Bitcoin-Qt can inspect all wallets.
 desktop_user() {
     runuser -u "$DESKTOP_USER" -- env HOME="$DESKTOP_HOME" \
         XDG_RUNTIME_DIR="/run/user/$DESKTOP_UID" \
