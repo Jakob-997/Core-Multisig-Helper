@@ -38,7 +38,8 @@ printf '%s\n' "$ROOT" >"$STATE/source-location"
 printf '%s\n' "$TEST_MODE" >"$STATE/test-mode"
 for module in "${MODULES[@]}"; do
     log "Starting module: $module"
-    # shellcheck source=/dev/null\n    source "$ROOT/modules/$module.sh"
+    # shellcheck source=/dev/null
+    source "$ROOT/modules/$module.sh"
     "$module"
     printf '%s\n' "$(date -u +%FT%TZ)" >"$STATE/$module.complete"
     log "Completed module: $module"
