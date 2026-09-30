@@ -18,7 +18,7 @@ The branch includes tests for:
 - rejection of mixed share sets;
 - desktop watch-only and one-signer test modes.
 
-The disposable real-Core regtest integration test is designed to verify:
+The disposable real-Core regtest integration test **passed in GitHub Actions on 2026-09-30** against the official checksum-verified Bitcoin Core 32.0rc2 x86_64 binary. It verified:
 
 - a fixed test master secret split 3-of-5;
 - all ten 3-of-5 combinations reconstruct identically;
@@ -32,7 +32,8 @@ The disposable real-Core regtest integration test is designed to verify:
 - exact descriptor recreation from the same recovered master secret.
 
 The mainnet/Qt smoke test uses no funds and no peers and checks `bc1q` BIP84
-addresses plus a private-keys-disabled watch-only desktop copy.
+addresses plus a private-keys-disabled watch-only desktop copy. This test remains a
+manual/pre-release check and was not part of the passing CI run recorded above.
 
 ## Still required before meaningful funds
 
