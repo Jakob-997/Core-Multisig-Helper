@@ -50,5 +50,7 @@ install_core() {
     modprobe nf_tables
     start_core
     stop_core
-    # CORE_STARTED is consumed by cleanup() in lib/common.sh.\n    # shellcheck disable=SC2034\n    CORE_STARTED=0
+    # CORE_STARTED is consumed by cleanup() in lib/common.sh.
+    # shellcheck disable=SC2034
+    CORE_STARTED=0
 }
