@@ -19,7 +19,7 @@ console in your logged-in GNOME desktop, with Internet initially available,
 an optical writer at `/dev/sr0`, and seven new blank CD-Rs:
 
 ```bash
-bash -c 'set -euo pipefail; d=$(mktemp -d "$HOME/glacier2-source.XXXXXX"); curl --proto "=https" --tlsv1.2 -fsSL https://github.com/Jakob-997/Glacier-2/archive/refs/heads/main.tar.gz -o "$d/source.tar.gz"; tar -xzf "$d/source.tar.gz" -C "$d"; sudo bash "$d/Glacier-2-main/setup.sh"'
+bash -c 'set -euo pipefail; if ! command -v curl >/dev/null 2>&1; then sudo apt-get update && sudo apt-get install -y --no-install-recommends ca-certificates curl; fi; d=$(mktemp -d "$HOME/glacier2-source.XXXXXX"); curl --proto "=https" --tlsv1.2 -fsSL https://github.com/Jakob-997/Glacier-2/archive/refs/heads/main.tar.gz -o "$d/source.tar.gz"; tar -xzf "$d/source.tar.gz" -C "$d"; sudo bash "$d/Glacier-2-main/setup.sh"'
 ```
 
 This downloads the repository before disabling networking; the local directory
@@ -28,7 +28,7 @@ identity confirmation prompts**. Only sudo authentication and the physical CD
 burn/swap/readback prompts remain. Inspect the source first when security matters. This convenience
 command trusts the current GitHub branch, GitHub/TLS, Ubuntu packages and the host.
 For reproducibility, download an independently reviewed commit archive instead.
-Core binaries are separately checked against signed checksums.
+Core binaries are separately checked against signed checksums. If `curl` is missing, the copy-paste command installs `ca-certificates` and `curl` with Ubuntu `apt` before downloading the repository.
 
 ### Test without burning CDs
 
@@ -40,7 +40,7 @@ with all eight wallets loaded so the generated signers can be inspected. No opti
 drive is needed:
 
 ```bash
-bash -c 'set -euo pipefail; d=$(mktemp -d "$HOME/glacier2-source.XXXXXX"); curl --proto "=https" --tlsv1.2 -fsSL https://github.com/Jakob-997/Glacier-2/archive/refs/heads/main.tar.gz -o "$d/source.tar.gz"; tar -xzf "$d/source.tar.gz" -C "$d"; sudo bash "$d/Glacier-2-main/setup.sh" --test'
+bash -c 'set -euo pipefail; if ! command -v curl >/dev/null 2>&1; then sudo apt-get update && sudo apt-get install -y --no-install-recommends ca-certificates curl; fi; d=$(mktemp -d "$HOME/glacier2-source.XXXXXX"); curl --proto "=https" --tlsv1.2 -fsSL https://github.com/Jakob-997/Glacier-2/archive/refs/heads/main.tar.gz -o "$d/source.tar.gz"; tar -xzf "$d/source.tar.gz" -C "$d"; sudo bash "$d/Glacier-2-main/setup.sh" --test'
 ```
 
 From an already downloaded source directory: `sudo bash setup.sh --test`.
