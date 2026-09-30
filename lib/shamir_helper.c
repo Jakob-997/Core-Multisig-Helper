@@ -1,5 +1,5 @@
 #define _GNU_SOURCE
-#include <errno.h>
+#include <ctype.h>\n#include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,7 +79,23 @@ static void trim_line(char *line) {
     if (p != line) memmove(line, p, strlen(p) + 1);
 }
 
+static int strict_standard_bytewords(const char *line) {
+    const size_t words = RECORD_LEN + 4; /* Bytewords appends four CRC32 bytes. */
+    const size_t expected = words * 4 + (words - 1);
+    if (strlen(line) != expected) return 0;
+    for (size_t i = 0; i < words; ++i) {
+        const size_t base = i * 5;
+        for (size_t j = 0; j < 4; ++j) {
+            unsigned char ch = (unsigned char)line[base + j];
+            if (!(ch >= 'a' && ch <= 'z')) return 0;
+        }
+        if (i + 1 < words && line[base + 4] != ' ') return 0;
+    }
+    return 1;
+}
+
 static int decode_record(const char *line, uint8_t record[RECORD_LEN]) {
+    if (!strict_standard_bytewords(line)) return 0;
     uint8_t *decoded = NULL;
     size_t decoded_len = 0;
     if (!bytewords_decode(bw_standard, line, &decoded, &decoded_len)) return 0;
