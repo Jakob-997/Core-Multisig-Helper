@@ -73,3 +73,21 @@ Passing static checks and regtest is **not** approval to use meaningful funds.
   validation results above apply to the earlier revisions only.
 - No physical hardening, reboot failure-path, GNOME or CD tests were performed
   for this update. `--test` itself is destructive and is not run on this workstation.
+
+
+## Test-mode signer visibility / documentation refresh
+
+- Updated `--test` desktop behavior so the user-owned Bitcoin-Qt datadir receives
+  copies of `signer_1` through `signer_7` in addition to `watch_only`, and the
+  launcher loads all eight wallets for inspection. Production mode remains
+  watch-only.
+- Added unit coverage for the explicit `test-signers` desktop mode and retained
+  the production `watch-only` default.
+- GitHub Actions `Prototype checks` completed successfully for the signer-wallet
+  code change (`22f2bbac`) and the subsequent curl/bootstrap and README/technical
+  documentation changes checked so far.
+- Reorganized the project documentation so `README.md` is the operational setup
+  guide and `TECHNICAL.md` holds architecture, verification, airgap, and failure
+  details. `RECOVERY.md` remains the destructive acceptance procedure.
+- No new physical Ubuntu, TPM/FDE, optical-disc, reboot, or hardware-isolation
+  acceptance test was performed as part of this documentation/update pass.
