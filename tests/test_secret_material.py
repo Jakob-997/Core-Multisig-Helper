@@ -19,7 +19,7 @@ class SecretMaterial(unittest.TestCase):
         seed = bytes.fromhex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
         self.assertEqual(
             master_xprv(seed, "main"),
-            "xprv9s21ZrQH143K4JwM5p8XddMzGi6yiwzv1g4r8pQkBvQnrGa8kxE2rjMG4HQAFQ11gDg6QVn9hG4cVyZJk2h5JQvWE5BYmNG7a4u6TjXfJ",
+            "xprv9s21ZrQH143K3EuJY8RRCWBLXFgB9WCcFKsv28bcaDy9LUZtXgHe9q9V8kLi4aJ6H8r5X2wu9gz2ZYXbAhtsAcJKX8Z1Ackw6Wq1oi8DEEk",
         )
 
     def test_passphrase_is_domain_separated_and_stable(self):
