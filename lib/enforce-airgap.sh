@@ -6,9 +6,6 @@ if [[ ${1:-} != --check ]]; then
         modprobe rfkill
         modprobe nf_tables
     fi
-        modprobe rfkill
-        modprobe nf_tables
-    fi
     if ! nft list table inet glacier2 >/dev/null 2>&1; then nft -f /etc/glacier2/airgap.nft; fi
     rfkill block all
     for path in /sys/class/net/*; do
