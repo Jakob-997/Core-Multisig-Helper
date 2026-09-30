@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 parse_options() {
     TEST_MODE=0
-    SKIP_CD=1
     for option in "$@"; do
         case $option in
             --test) TEST_MODE=1;;
