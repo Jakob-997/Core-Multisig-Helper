@@ -6,7 +6,7 @@ parse_options() {
         case $option in
             --test) SKIP_CD=1;;
             --help|-h)
-                printf 'Usage: sudo bash setup.sh [--test]\n--test: perform real airgap and mainnet wallet setup, but skip CDs and optical-drive checks. NOT a dry run.\n'
+                printf 'Usage: sudo bash setup.sh [--test]\n--test: perform real airgap and mainnet wallet setup, skip CDs, and show all signer wallets in desktop Bitcoin-Qt. NOT a dry run.\n'
                 exit 0;;
             *) die "Unknown option: $option (use --help)";;
         esac
