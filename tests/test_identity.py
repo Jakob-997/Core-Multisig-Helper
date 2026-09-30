@@ -58,6 +58,40 @@ class Identity(unittest.TestCase):
             self.assertIn("glacier2-bitcoin.desktop", values[("org.gnome.shell", "favorite-apps")])
             self.assertEqual(values[("org.gnome.desktop.background", "picture-uri")], values[("org.gnome.desktop.screensaver", "picture-uri")])
             self.assertIn("Offline Watch Wallet", (home / "Desktop/glacier2-bitcoin.desktop").read_text())
+            self.assertEqual((home / ".local/share/glacier2/desktop-mode").read_text(), "watch-only\n")
+
+    def test_apply_test_signers_mode(self):
+        with tempfile.TemporaryDirectory() as folder:
+            home = Path(folder) / "home"
+            home.mkdir()
+            (home / "Desktop").mkdir()
+            identity = Path(folder) / "identity"
+            identity.mkdir()
+            generate(identity, "regtest")
+            (identity / "watch-only.dat").write_bytes(b"public-wallet-test-fixture")
+            values = {}
+            def settings(action, *args):
+                if action == "list-schemas":
+                    return "org.gnome.desktop.background"
+                if action == "list-keys":
+                    return "picture-uri\npicture-uri-dark\npicture-options"
+                schema, key = args[:2]
+                if action == "get":
+                    return values.get((schema, key), "'old'")
+                if action == "set":
+                    values[(schema, key)] = args[2]
+                    return ""
+                raise AssertionError(action)
+            with patch("desktop_identity.os.geteuid", return_value=1000), patch("desktop_identity.Path.home", return_value=home), \
+                 patch("desktop_identity.gs", side_effect=settings), \
+                 patch("desktop_identity.subprocess.check_output", return_value=str(home / "Desktop")), \
+                 patch("desktop_identity.subprocess.run") as run:
+                run.return_value.returncode = 0
+                apply(identity, "regtest", "test-signers")
+            self.assertEqual((home / ".local/share/glacier2/desktop-mode").read_text(), "test-signers\n")
+            entry = (home / "Desktop/glacier2-bitcoin.desktop").read_text()
+            self.assertIn("Offline Test Wallets", entry)
+            self.assertIn("seven signer wallets", entry)
 
 
 if __name__ == "__main__":
