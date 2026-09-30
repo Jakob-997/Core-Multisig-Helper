@@ -1,225 +1,282 @@
-# Glacier-2 — experimental 3-of-7 offline wallet prototype
+# Glacier-2
 
-**Do not use meaningful funds until destructive recovery and spend tests pass.**
-This is unaudited prototype software using Bitcoin Core **32.0rc2**, not a finished
-Glacier security procedure. Default network: **Bitcoin mainnet**, creating real
-Bitcoin receive addresses. Explicit regtest/signet options remain available for tests.
+**A minimal 3-of-7 Bitcoin cold-storage appliance built around Bitcoin Core.**
 
-Seven independent HD roots are generated on **one computer**. Compromise of that
-computer can expose all seven keys. Multisig does not create independent security
-domains here. Wallets, CDs, ISO images, and staging copies are **unencrypted**.
-Any three signer backups plus the descriptor can spend. This produces Core wallet
-backups, not BIP39 seed phrases. Protect all remaining local copies too.
+Glacier-2 turns a clean Ubuntu computer into a permanently offline Bitcoin signing
+machine. It creates seven independent Bitcoin Core signer wallets, a 3-of-7
+`wsh(sortedmulti(...))` policy, a desktop watch-only wallet, and seven verified
+CD-R backups — one private signer per disc.
 
-## One copy-paste command
+> [!WARNING]
+> **Glacier-2 is experimental, unaudited prototype software. Do not use meaningful
+> funds until you have completed the full recovery and spend test in
+> [RECOVERY.md](RECOVERY.md).**
 
-On a **dedicated disposable Ubuntu 24.04 or 26.04 installation**, at a local
-console in your logged-in GNOME desktop, with Internet initially available,
-`curl`, `tar`, and `sudo` installed,
-an optical writer at `/dev/sr0`, and seven new blank CD-Rs:
+## What you end up with
+
+| Item | Purpose |
+| --- | --- |
+| Offline Ubuntu computer | Generates and holds the original signer wallets |
+| Bitcoin Core watch-only wallet | Displays and derives addresses without needing private keys |
+| Signer 1 through Signer 7 CD-Rs | One private Bitcoin Core wallet backup per disc |
+| Public descriptor / manifest | Defines the complete 3-of-7 wallet policy |
+| Recognition code + color | A visual cue for recognizing the dedicated offline machine |
+
+Glacier-2 uses Bitcoin Core wallet backups, **not BIP39 seed words**. Any three
+different signer backups, together with the public wallet policy, are sufficient
+to spend.
+
+---
+
+# Setup instructions
+
+## 1. Prepare the computer
+
+Use a computer dedicated to Glacier-2. A spare laptop is ideal.
+
+You need:
+
+- Ubuntu Desktop **24.04 or 26.04**
+- one internal drive **or** a separate USB SSD/flash drive to install Ubuntu onto
+- the Ubuntu installer USB
+- a USB or internal CD/DVD writer
+- **seven new blank CD-R discs**
+- Internet access only for the initial Ubuntu/Core installation
+- a pen or permanent marker for labeling the discs and recording the recognition code
+
+For a serious setup, start from an official Ubuntu image and verify it before use.
+Do not use an everyday computer that already contains sensitive data.
+
+## 2. Install a clean Ubuntu system
+
+Boot the Ubuntu installer and proceed through the normal installation.
+
+At **Disk setup**:
+
+1. Choose **Erase disk and install Ubuntu**.
+2. Select the drive that will become the Glacier-2 system. This can be the
+   computer's internal drive or a dedicated second USB drive. Do **not** erase the
+   Ubuntu installer USB by mistake.
+3. Enable full-disk encryption.
+
+### Encryption option A — TPM-backed encryption
+
+If Ubuntu offers **Use hardware-backed disk encryption**, you can use the machine's
+TPM to protect the installation at rest.
+
+Ubuntu currently describes TPM-backed FDE as experimental on 24.04 and Beta on
+26.04. Store the recovery key outside the Glacier computer. For a security-sensitive
+cold-storage machine, adding a disk PIN or passphrase provides additional protection.
+
+Ubuntu documentation:
+
+- [Ubuntu TPM-backed disk encryption](https://ubuntu.com/desktop/docs/en/latest/explanation/hardware-backed-disk-encryption/)
+- [Enable TPM encryption during installation](https://ubuntu.com/desktop/docs/en/latest/how-to/encrypt-your-disk-with-tpm/)
+
+### Encryption option B — normal encrypted install
+
+If TPM-backed encryption is unavailable or you prefer conventional passphrase
+protection, use Ubuntu's normal encrypted-disk option and choose a strong,
+unique passphrase.
+
+If you want a simple machine-generated value, open a terminal in the live Ubuntu
+environment and run:
+
+```bash
+uuidgen -r
+```
+
+If `uuidgen` is unavailable:
+
+```bash
+systemd-id128 new
+```
+
+Write the value down carefully and keep it somewhere physically separate from the
+computer. Losing the disk-encryption secret can make the installation unrecoverable.
+
+Finish the Ubuntu installation, reboot into the newly installed system, and log in.
+
+## 3. Prepare the backup media
+
+Before running Glacier-2:
+
+1. Plug in the CD/DVD writer.
+2. Keep the writer connected for the entire setup.
+3. Have seven blank **CD-R** discs ready.
+4. Label them:
+
+```text
+Glacier-2 — Signer 1 of 7
+Glacier-2 — Signer 2 of 7
+Glacier-2 — Signer 3 of 7
+Glacier-2 — Signer 4 of 7
+Glacier-2 — Signer 5 of 7
+Glacier-2 — Signer 6 of 7
+Glacier-2 — Signer 7 of 7
+```
+
+Do not use CD-RW media.
+
+> [!IMPORTANT]
+> Connect the optical writer **before** Glacier-2 hardens the machine. Do not attach
+> new USB devices after key generation begins.
+
+The seven discs are all **private signer backups**. There is not a private
+"watch-only disc." Public/watch-only recovery information is included on every
+signer disc.
+
+If you want a separate eighth medium labeled **GLACIER-2 — PUBLIC / WATCH ONLY**,
+make it later on a separate clean computer using only the public files
+(`descriptors.txt`, `manifest.json`, `identity.json`, and `RECOVERY.md`).
+Never copy `wallet.dat` onto public media.
+
+## 4. Run Glacier-2
+
+The computer must still have Internet access at this point.
+
+Copy and paste this entire command into Terminal:
 
 ```bash
 bash -c 'set -euo pipefail; if ! command -v curl >/dev/null 2>&1; then sudo apt-get update && sudo apt-get install -y --no-install-recommends ca-certificates curl; fi; d=$(mktemp -d "$HOME/glacier2-source.XXXXXX"); curl --proto "=https" --tlsv1.2 -fsSL https://github.com/Jakob-997/Glacier-2/archive/refs/heads/main.tar.gz -o "$d/source.tar.gz"; tar -xzf "$d/source.tar.gz" -C "$d"; sudo bash "$d/Glacier-2-main/setup.sh"'
 ```
 
-This downloads the repository before disabling networking; the local directory
-is retained. It runs all five modules with **no setup, hardening, mainnet or
-identity confirmation prompts**. Only sudo authentication and the physical CD
-burn/swap/readback prompts remain. Inspect the source first when security matters. This convenience
-command trusts the current GitHub branch, GitHub/TLS, Ubuntu packages and the host.
-For reproducibility, download an independently reviewed commit archive instead.
-Core binaries are separately checked against signed checksums. If `curl` is missing, the copy-paste command installs `ca-certificates` and `curl` with Ubuntu `apt` before downloading the repository.
+Enter your Ubuntu password when `sudo` asks for it.
 
-### Test without burning CDs
+Glacier-2 will:
 
-The same command with `--test` performs installation, real network hardening,
-real mainnet wallet generation and desktop setup, but **skips the entire CD module
-and all optical-device checks**. Test mode also places desktop copies of
-`signer_1` through `signer_7` alongside `watch_only` and launches Bitcoin-Qt
-with all eight wallets loaded so the generated signers can be inspected. No optical
-drive is needed:
+1. install the required packages and verified Bitcoin Core build;
+2. harden the machine and disable networking;
+3. create seven independent signer wallets;
+4. build and validate the 3-of-7 descriptor wallet;
+5. create the offline desktop/watch-only Bitcoin Core launcher;
+6. ask for each CD-R in order;
+7. burn the corresponding signer wallet;
+8. eject it and require a physical reinsertion/readback verification before continuing.
+
+Once the hardening stage begins, **do not reconnect the machine to a network**.
+
+> [!NOTE]
+> The convenience command above downloads the current `main` branch. For a
+> high-assurance setup, review the source first and use a specific reviewed commit
+> instead of trusting a moving branch.
+
+## 5. Follow the CD prompts
+
+When Glacier-2 asks for a disc, insert the matching blank disc.
+
+For example:
+
+```text
+BURN SIGNER 1  -> insert "Glacier-2 — Signer 1 of 7"
+BURN SIGNER 2  -> insert "Glacier-2 — Signer 2 of 7"
+...
+BURN SIGNER 7  -> insert "Glacier-2 — Signer 7 of 7"
+```
+
+The program burns the disc, ejects it, asks you to reinsert it, and verifies the
+readback before moving to the next signer.
+
+Do not mix up the labels.
+
+## 6. Record the machine identity
+
+Glacier-2 gives the offline desktop a randomly generated recognition color and code.
+
+Write both down on paper and keep that record separately from the laptop.
+
+The recognition cue is useful for spotting an obviously different environment, but
+it is **not cryptographic attestation**. Malware could copy the wallpaper and code.
+
+## 7. After setup
+
+When setup finishes:
+
+- keep the Glacier computer permanently offline;
+- do not reconnect Ethernet, Wi-Fi, Bluetooth, cellular, tethering, or other radios;
+- do not attach new USB devices unless your recovery procedure specifically requires it;
+- store the seven signer discs in separate protected locations;
+- protect the public descriptor too — it cannot spend coins, but it reveals your wallet structure and addresses;
+- open **Bitcoin Core — Offline Watch Wallet** only on the offline machine;
+- remember that the offline watch wallet cannot synchronize balances;
+- complete the recovery test before sending meaningful funds.
+
+Read **[RECOVERY.md](RECOVERY.md)** before treating the wallet as usable.
+
+---
+
+## Test the project without burning CDs
+
+For development only, append `--test`:
 
 ```bash
 bash -c 'set -euo pipefail; if ! command -v curl >/dev/null 2>&1; then sudo apt-get update && sudo apt-get install -y --no-install-recommends ca-certificates curl; fi; d=$(mktemp -d "$HOME/glacier2-source.XXXXXX"); curl --proto "=https" --tlsv1.2 -fsSL https://github.com/Jakob-997/Glacier-2/archive/refs/heads/main.tar.gz -o "$d/source.tar.gz"; tar -xzf "$d/source.tar.gz" -C "$d"; sudo bash "$d/Glacier-2-main/setup.sh" --test'
 ```
 
-From an already downloaded source directory: `sudo bash setup.sh --test`.
-**This is not a dry run, does not select a test network, and leaves you without
-CD recovery media.** It disables networking persistently and creates real keys.
-In test mode the seven signer wallet copies are deliberately accessible to the
-logged-in desktop account for Bitcoin-Qt inspection. **Do not fund this test setup.**
-Existing-state checks still prevent rerunning over the same keys. Test-network
-selection remains a separate `GLACIER_CHAIN` option.
+`--test` is **not a dry run**. It performs real hardening and creates real keys,
+but skips the CD module. For inspection, Bitcoin-Qt loads:
 
-To select another network or drive after downloading, run from that source folder:
-
-```bash
-sudo env GLACIER_CHAIN=regtest GLACIER_DRIVE=/dev/sr0 bash setup.sh
+```text
+watch_only
+signer_1
+signer_2
+signer_3
+signer_4
+signer_5
+signer_6
+signer_7
 ```
 
-Mainnet is already selected unless overridden; no extra confirmation is requested. Neither
-mainnet nor signet setup synchronizes a blockchain. The offline node never needs
-the chain to generate keys. Use a separate online watch-only coordinator later.
-An existing `/var/lib/glacier2`, `/etc/glacier2`, or `/opt/glacier2` causes refusal.
-Do not delete those directories to retry after keys may have been generated.
+The signer wallets are deliberately exposed to the desktop account in test mode.
+**Never fund a `--test` installation.**
 
-## Modules and outputs
-
-| File | Responsibility |
-| --- | --- |
-| `setup.sh`, `lib/options.sh` | Local preflight, `--test` routing, exclusive lock, ordered steps, completion records, cleanup |
-| `lib/common.sh` | Logging, disc confirmations, dedicated Core lifecycle and RPC |
-| `modules/install_core.sh` | Dependencies, pinned 32.0rc2 download, signatures/hash, isolated install |
-| `modules/airgap.sh` | Persistent firewall, radio/service/driver blocks, interface unbinding and kernel module lock |
-| `modules/wallets.sh`, `lib/wallets.py` | Seven blank signers, BIP87 account keys, private signer descriptors, watch-only policy, Core checks |
-| `modules/desktop_identity.sh`, `lib/desktop_identity.py` | Recognition wallpaper/color/code, GNOME settings, offline Core Qt shortcut |
-| `modules/backup_cd.sh` | `backupwallet`, one signer per CD, ISO creation, physical reinsertion/readback |
-
-Core is installed under `/opt/glacier2/core`. State is root-only under
-`/var/lib/glacier2`. The `public/` directory contains both checksummed receive and
-change descriptors and a JSON manifest. Descriptors use
-`wsh(sortedmulti(3,...))` with `m/87h/0h/0h/{0,1}/*` on mainnet or
-`m/87h/1h/0h/{0,1}/*` on regtest/signet. Initial imported range: 0–999; extend it
-when recovering addresses beyond that range. Seven roots are created by
-`addhdkey`, account keys by `derivehdkey`. Each signer imports a descriptor with
-only its own private account key; public outputs never include private keys.
-
-Each disc contains exactly `wallet.dat` for that signer, `descriptors.txt`,
-`manifest.json`, `identity.json`, `RECOVERY.md`, `DISC.txt`, and `SHA256SUMS`. All seven public key
-records are intentionally present on every disc: recovery needs the full policy.
-Public descriptors are privacy-sensitive. Per-disc file hashes detect accidental
-corruption, not malicious replacement of both data and hashes. Verification also
-compares the readback image with the locally generated image.
-
-## Desktop identity and Bitcoin Core Qt
-
-After wallet creation, the desktop module generates an 80-bit random recognition
-code and a random dark background color locally with the operating system's
-cryptographic random generator. The wallpaper says **OFFLINE LAPTOP / COLD STORAGE**,
-shows the network, code, and color value, and asks you to compare them with a
-separate paper record. The identity is saved once under `/opt/glacier2/identity`
-and copied to every backup CD. Reruns never silently replace it.
-
-This is a visual anti-phishing cue, **not an anti-exfiltration mechanism or proof
-that the computer/software has not changed**. Malware can copy the image and code.
-Compare against your paper record, not another file on the same laptop. A mismatch
-means stop and investigate; a match does not establish trust.
-
-The module sets GNOME light/dark desktop wallpaper and the legacy lock wallpaper
-key where available. Modern GNOME uses a **blurred desktop image on the lock
-screen**, often hiding the code/text. Check both desktop and lock/unlock manually;
-the script does not remove lock-screen blur, install shell extensions, change the
-login screen, or claim the code is readable while locked. It records previous
-changed settings in `~/.local/share/glacier2/desktop-settings.json`.
-
-An Applications launcher named **Bitcoin Core — Offline Watch Wallet** is added,
-with a desktop copy where a Desktop folder exists and GNOME favorites pinning
-where allowed. Some desktops require right-click **Allow Launching**. The shortcut
-uses the [official Bitcoin Core Qt SVG icon](https://github.com/bitcoin/bitcoin/blob/v32.0rc2/src/qt/res/src/bitcoin.svg),
-bundled unchanged with its upstream license; there is no generated substitute.
-The shortcut starts the verified `bitcoin-qt` with networking disabled and a
-separate user-owned Core datadir at `~/.local/share/glacier2/core`. In a normal
-run that datadir contains only the **watch-only** wallet; Qt does not run as root
-and the seven signer wallets are not exposed to the desktop account. In `--test`
-mode, the same datadir additionally contains desktop copies of all seven signer
-wallets and the launcher loads all eight wallets for inspection. The normal
-watch-only launcher can display/generate real mainnet addresses, but cannot sign. Since it stays
-offline it does not provide synchronized balances. Do not open it until setup
-has finished, and never reconnect this computer. Existing installations still
-require manual review; do not rerun setup to retrofit these cues over existing keys.
-
-References: [GNOME desktop background](https://help.gnome.org/system-admin-guide/desktop-background.html),
-[legacy lock-screen setting](https://help.gnome.org/system-admin-guide/desktop-shield.html),
-[modern GNOME lock background behavior](https://mail.gnome.org/archives/commits-list/2020-February/msg11612.html).
-
-## Verification trust
-
-The installer requires valid SHA256-or-stronger signatures from **both** pinned
-primary keys before checking the selected archive hash and extracting it:
-
-* Hennadii Stepanov / hebasto: `D1DBF2C4B96F2DEBF4C16654410108112E7EA81F`
-* Ava Chow / achow101: `152812300785C96444D3334D17565732E08E5E41`
-
-Keys are fetched from the official `bitcoin-core/guix.sigs` repository but their
-fingerprints are pinned here. Independently authenticate these trust anchors.
-If either signer is missing, expired, revoked or invalid, stop; there is no bypass.
-This is signature verification, not an independent reproducible build.
-
-## Airgap behavior and limits
-
-The runner disables swap, drops all non-loopback IPv4/IPv6 input/output/forwarding,
-blocks radios, masks common network services, strips addresses and brings down
-interfaces, unbinds discovered NICs, blacklists installed network/Bluetooth
-drivers, plus installed NFC/UWB and selected radio/SDR driver families, and sets
-boot parameters. It rebuilds initramfs/GRUB and installs boot enforcement and
-hotplug rules. Each boot reapplies the firewall/radio/link restrictions and locks
-further kernel module loading. Boot-enforcement failure requests emergency-mode
-isolation; that failure path still needs a physical-machine test. Loopback stays
-available for cookie-authenticated Core RPC bound to
-127.0.0.1 on dedicated port 18459. Core also starts with networking disabled.
-
-**Persistent does not mean irreversible or universal.** The kernel's
-`modules_disabled=1` lock cannot be reset within that running kernel. A reboot
-starts a new kernel, so the enabled service reapplies the lock; it does not erase
-the saved firewall, driver blacklist, masked services or boot parameters.
-Root can still alter those saved rules, use already-loaded drivers, or boot another
-OS. See the [kernel module-lock documentation](https://docs.kernel.org/admin-guide/sysctl/kernel.html#modules-disabled).
-
-**This is not a physical airgap or a defense against malicious root/kernel/firmware.**
-Disable devices in firmware, physically remove Wi-Fi/Bluetooth hardware and
-unplug Ethernet. Also remove/disconnect cellular/WWAN modems, USB tethering/network
-adapters, NFC/UWB devices, external radios and SDR hardware. `rfkill block all`
-covers radios registered with Linux rfkill, not every transmitter that could exist;
-software blocks are reversible ([kernel rfkill documentation](https://docs.kernel.org/driver-api/rfkill.html)).
-Some radios are accessible directly from user space, without a network driver.
-An antenna alone is not a transmitter; the attached radio hardware must be removed
-or disabled physically. No script can certify “any possible escape,” including
-firmware or acoustic/optical/electromagnetic side channels.
-Built-in drivers, already-loaded code, raw Layer-2 traffic,
-early boot before enforcement, DMA, firmware radios and non-IP channels are not
-eliminated by an inet firewall. Do not attach new USB devices after key creation.
-In normal mode optical drivers are loaded before the module lock; `--test` skips
-them, including on subsequent boots. Some hardware may still need
-additional drivers and will fail closed. Driver files are deliberately not deleted:
-deletion does not stop built-in/loaded drivers and adds avoidable boot-repair risk.
-
-Persistent files remain after failure. A later reboot must be tested for retained
-isolation; it is not a license to reconnect. Never reconnect a machine that has
-held these keys. Reinstall it only after verified recovery, with suitable media
-sanitization. Live ISOs, WSL, containers, non-GRUB boot and remote operation are
-unsupported production targets. Sleep/hibernate and firmware behavior require
-separate hardware testing. This script does not claim secure erasure of RAM,
-SSDs, swap history, temporary files, or optical discs.
-
-## Reruns, failure and testing
-
-Idempotence is deliberately **refuse-on-existing-state**, not silently generating
-new wallets or repeating burns. An exclusive lock prevents concurrent runs.
-Completion markers are audit hints, never sufficient evidence of safe state.
-Failures stop subsequent stages, shut down the dedicated Core process and leave
-network restrictions in place. No automatic wallet deletion, firewall rollback,
-disc blanking, or regeneration occurs. Partial backup runs require manual review;
-use existing wallets/backups and fresh media, never restart key creation.
-
-Read [RECOVERY.md](RECOVERY.md) for the destructive test checklist.
-Local, nondestructive code checks (with Bash, ShellCheck, Python/Pillow,
-DejaVu fonts, jq and xorriso):
+For regtest instead of mainnet:
 
 ```bash
-bash tests/check.sh
-python3 tests/integration.py /path/to/verified/bitcoin-32.0rc2/bin
-python3 tests/mainnet_qt.py /path/to/verified/bitcoin-32.0rc2/bin
+sudo env GLACIER_CHAIN=regtest bash setup.sh --test
 ```
 
-The integration test uses a disposable regtest directory, no airgap mutations and
-no optical writes. It funds the watch wallet, restores seven `backupwallet` files
-after ISO roundtrips, checks one signature per restored signer, rejects all 21
-two-signer combinations and checks all 35 three-signer combinations with
-`testmempoolaccept`. This does not replace actual CD, reboot or destructive recovery
-tests. See [VALIDATION.md](VALIDATION.md) for results and outstanding hardware tests.
-The mainnet Qt smoke test uses temporary wallets with networking disabled and no funds.
+---
 
-Primary references: [Core 32.0rc2 distribution](https://bitcoincore.org/bin/bitcoin-core-32.0/test.rc2/),
-[Core verification guide](https://bitcoincore.org/en/download/),
-[pinned multisig tutorial](https://github.com/bitcoin/bitcoin/blob/v32.0rc2/doc/multisig-tutorial.md),
-[BIP87](https://github.com/bitcoin/bips/blob/master/bip-0087.mediawiki).
+## Storage model
+
+A 3-of-7 wallet remains spendable if you retain any three valid signer backups,
+but the goal is not merely to have three surviving discs. Keep all seven healthy,
+geographically separated where practical, and periodically verify readability.
+
+Each signer CD contains:
+
+- that signer's private `wallet.dat`;
+- the complete public descriptors;
+- `manifest.json`;
+- the recognition identity;
+- recovery instructions;
+- checksums.
+
+The CD itself is **not encrypted**. Physical custody is the security boundary.
+
+## Important limitations
+
+- All seven keys are initially generated on the same computer. A compromise during
+  generation can therefore compromise the whole multisig.
+- The software airgap is defense in depth, not a substitute for physically removing
+  or disabling network/radio hardware.
+- Glacier-2 does not provide secure erase.
+- Glacier-2 does not use hardware wallets or seven independent signing devices.
+- Glacier-2 is not formally audited.
+- Passing automated tests does not prove the physical procedure is safe.
+
+For the implementation details and threat-model discussion, see
+**[TECHNICAL.md](TECHNICAL.md)**.
+
+## Documentation
+
+- **[RECOVERY.md](RECOVERY.md)** — destructive recovery and spend-test procedure
+- **[TECHNICAL.md](TECHNICAL.md)** — architecture, wallet policy, airgap design, verification, and failure behavior
+- **[VALIDATION.md](VALIDATION.md)** — tests completed so far and outstanding physical tests
+
+## Project status
+
+Glacier-2 currently targets Ubuntu 24.04/26.04 and Bitcoin Core 32.0rc2. It is an
+experimental attempt to make a small, understandable Bitcoin Core cold-storage
+procedure rather than a general-purpose wallet.
