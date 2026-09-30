@@ -34,7 +34,10 @@ Core binaries are separately checked against signed checksums.
 
 The same command with `--test` performs installation, real network hardening,
 real mainnet wallet generation and desktop setup, but **skips the entire CD module
-and all optical-device checks**. No optical drive is needed:
+and all optical-device checks**. Test mode also places desktop copies of
+`signer_1` through `signer_7` alongside `watch_only` and launches Bitcoin-Qt
+with all eight wallets loaded so the generated signers can be inspected. No optical
+drive is needed:
 
 ```bash
 bash -c 'set -euo pipefail; d=$(mktemp -d "$HOME/glacier2-source.XXXXXX"); curl --proto "=https" --tlsv1.2 -fsSL https://github.com/Jakob-997/Glacier-2/archive/refs/heads/main.tar.gz -o "$d/source.tar.gz"; tar -xzf "$d/source.tar.gz" -C "$d"; sudo bash "$d/Glacier-2-main/setup.sh" --test'
@@ -43,8 +46,10 @@ bash -c 'set -euo pipefail; d=$(mktemp -d "$HOME/glacier2-source.XXXXXX"); curl 
 From an already downloaded source directory: `sudo bash setup.sh --test`.
 **This is not a dry run, does not select a test network, and leaves you without
 CD recovery media.** It disables networking persistently and creates real keys.
-Do not fund this test setup. Existing-state checks still prevent rerunning over
-the same keys. Test-network selection remains a separate `GLACIER_CHAIN` option.
+In test mode the seven signer wallet copies are deliberately accessible to the
+logged-in desktop account for Bitcoin-Qt inspection. **Do not fund this test setup.**
+Existing-state checks still prevent rerunning over the same keys. Test-network
+selection remains a separate `GLACIER_CHAIN` option.
 
 To select another network or drive after downloading, run from that source folder:
 
@@ -112,11 +117,13 @@ with a desktop copy where a Desktop folder exists and GNOME favorites pinning
 where allowed. Some desktops require right-click **Allow Launching**. The shortcut
 uses the [official Bitcoin Core Qt SVG icon](https://github.com/bitcoin/bitcoin/blob/v32.0rc2/src/qt/res/src/bitcoin.svg),
 bundled unchanged with its upstream license; there is no generated substitute.
-The shortcut
-starts the verified `bitcoin-qt` with networking disabled and a separate,
-user-owned **watch-only** copy at `~/.local/share/glacier2/core`. It does not run
-Qt as root or expose the seven private signer wallets to the desktop account.
-It can display/generate real mainnet addresses, but cannot sign. Since it stays
+The shortcut starts the verified `bitcoin-qt` with networking disabled and a
+separate user-owned Core datadir at `~/.local/share/glacier2/core`. In a normal
+run that datadir contains only the **watch-only** wallet; Qt does not run as root
+and the seven signer wallets are not exposed to the desktop account. In `--test`
+mode, the same datadir additionally contains desktop copies of all seven signer
+wallets and the launcher loads all eight wallets for inspection. The normal
+watch-only launcher can display/generate real mainnet addresses, but cannot sign. Since it stays
 offline it does not provide synchronized balances. Do not open it until setup
 has finished, and never reconnect this computer. Existing installations still
 require manual review; do not rerun setup to retrofit these cues over existing keys.
