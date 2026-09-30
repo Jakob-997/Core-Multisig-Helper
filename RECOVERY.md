@@ -12,8 +12,10 @@ is not proof of wallet recovery or spending ability. Every disc is unencrypted.
 - Record the recognition code and color from `identity.json` on separate paper.
   Compare them with the desktop before use; check lock/unlock behavior too. Modern
   GNOME may blur the lock-screen text. These are copyable recognition cues, not
-  proof of integrity or protection against exfiltration. The desktop Core shortcut
-  contains only a watch-only copy; private signer recovery still uses the CDs.
+  proof of integrity or protection against exfiltration. In a normal production
+  run the desktop Core shortcut contains only a watch-only copy; private signer
+  recovery still uses the CDs. In `--test` mode the desktop datadir deliberately
+  contains copies of all seven signer wallets for inspection and must never be funded.
 - Verify all seven physical CDs on a second optical reader: mount read-only,
   enter the disc directory, and run `sha256sum --check --strict SHA256SUMS`.
   Confirm the signer number in `DISC.txt`, that there is exactly one `wallet.dat`,
@@ -94,9 +96,11 @@ is not proof of wallet recovery or spending ability. Every disc is unencrypted.
 ## Partial-run recovery
 
 `setup.sh --test` runs real hardening and mainnet key generation without CDs or
-optical-drive checks. It is not a dry run and creates no CD recovery media. No
-setup confirmation prompts are shown. Do not fund this test installation or
-assume you can rerun setup later to add CDs; existing-state refusal still applies.
+optical-drive checks. It is not a dry run and creates no CD recovery media. For
+inspection, the desktop Bitcoin-Qt datadir also receives copies of `signer_1`
+through `signer_7` in addition to `watch_only`. No setup confirmation prompts
+are shown. Do not fund this test installation or assume you can rerun setup later
+to add CDs; existing-state refusal still applies.
 
 The runner intentionally refuses reruns after it creates state. Preserve
 `/var/lib/glacier2`, all discs, and the source. Inspect completion records but
