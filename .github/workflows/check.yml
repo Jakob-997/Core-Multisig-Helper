@@ -1,0 +1,13 @@
+name: Prototype checks
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  static-and-unit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install validation tools
+        run: sudo apt-get update -qq && sudo apt-get install -y shellcheck python3-pil fonts-dejavu-core
+      - name: Check scripts and unit tests (no hardening, keys, or CD writes)
+        run: bash tests/check.sh

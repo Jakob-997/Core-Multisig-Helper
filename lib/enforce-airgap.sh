@@ -4,8 +4,10 @@ export PATH=/usr/sbin:/usr/bin:/sbin:/bin
 if [[ ${1:-} != --check ]]; then
     # Optical dependencies must precede the reboot-persistent runtime module lock.
     if [[ $(cat /proc/sys/kernel/modules_disabled) == 0 ]]; then
-        modprobe sr_mod
-        modprobe sg
+        if [[ $(cat /etc/glacier2/skip-cd) == 0 ]]; then
+            modprobe sr_mod
+            modprobe sg
+        fi
         modprobe rfkill
         modprobe nf_tables
     fi
@@ -21,6 +23,7 @@ if [[ ${1:-} != --check ]]; then
     swapoff -a
     sysctl -w kernel.modules_disabled=1 >/dev/null
 fi
+[[ $(cat /proc/sys/kernel/modules_disabled) == 1 ]]
 # Check actual policies and loopback-only exceptions, not a marker file.
 nft -j list table inet glacier2 | python3 -c '
 import json,sys

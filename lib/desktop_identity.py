@@ -38,12 +38,8 @@ def generate(directory, chain):
     line("Compare with your separate paper record before use.", 825, 24)
     line("Visual cue only — not proof the system is unchanged.", 870, 22)
     image.save(directory / "wallpaper.png")
-    icon = Image.new("RGB", (256, 256), "#F7931A")
-    ImageDraw.Draw(icon).text((128, 128), "B", fill="white", anchor="mm",
-                             font=ImageFont.truetype(str(fontdir / "DejaVuSans-Bold.ttf"), 180))
-    icon.save(directory / "bitcoin.png")
     target.write_text(json.dumps(identity, indent=2) + "\n")
-    for path in (directory / "wallpaper.png", directory / "bitcoin.png", target):
+    for path in (directory / "wallpaper.png", target):
         path.chmod(0o644)
     return identity
 
@@ -95,7 +91,7 @@ def apply(directory, chain):
     applications.mkdir(parents=True, exist_ok=True)
     entry = ("[Desktop Entry]\nType=Application\nName=Bitcoin Core — Offline Watch Wallet\n"
              "Comment=Glacier-2 public watch-only wallet; networking disabled\n"
-             "Exec=/opt/glacier2/identity/launch-qt\nIcon=/opt/glacier2/identity/bitcoin.png\nTerminal=false\n"
+             "Exec=/opt/glacier2/identity/launch-qt\nIcon=/opt/glacier2/identity/bitcoin-core.svg\nTerminal=false\n"
              "Categories=Office;Finance;\nStartupWMClass=Bitcoin-qt\n")
     app = applications / desktop_id
     with app.open("x") as handle:

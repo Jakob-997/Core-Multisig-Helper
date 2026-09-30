@@ -70,6 +70,9 @@ is not proof of wallet recovery or spending ability. Every disc is unencrypted.
 
 - Before generating non-test keys, verify that Ethernet is unplugged and radio
   hardware is removed/disabled. Firmware settings alone may be reversible.
+- Include cellular/WWAN modems, NFC/UWB, USB network/tethering devices and any
+  attached radio/SDR hardware. A software block covers only recognized devices;
+  it cannot prove the absence of other transmitters or non-network side channels.
 - Confirm `/etc/glacier2/enforce --check` succeeds, loopback works, every other
   link is down, radios are blocked, routes cannot carry traffic, and Core reports
   `networkactive=false` and zero connections. Confirm
@@ -77,6 +80,10 @@ is not proof of wallet recovery or spending ability. Every disc is unencrypted.
 - Reboot a **test** installation; inspect `systemctl status glacier2-airgap`,
   kernel boot parameters, masked services, module blacklists, firewall rules and
   interface states. Repeat the check after sleep/resume if it will ever be used.
+- Confirm the module-loading lock was reapplied after reboot. On a disposable
+  test installation, test enforcement failure and verify emergency isolation.
+  A reboot does not delete persistent rules, but a privileged attacker or a
+  different OS can bypass them; physical isolation is still required.
 - On disposable test hardware only, test hotplug NICs and attempts by ordinary
   services to reconnect. Confirm IPv4 and IPv6 isolation while RPC on loopback
   still works. Treat any unexpected connection or enforcement failure as failure.
@@ -85,6 +92,11 @@ is not proof of wallet recovery or spending ability. Every disc is unencrypted.
   later stages do not run and that existing keys are never regenerated.
 
 ## Partial-run recovery
+
+`setup.sh --test` runs real hardening and mainnet key generation without CDs or
+optical-drive checks. It is not a dry run and creates no CD recovery media. No
+setup confirmation prompts are shown. Do not fund this test installation or
+assume you can rerun setup later to add CDs; existing-state refusal still applies.
 
 The runner intentionally refuses reruns after it creates state. Preserve
 `/var/lib/glacier2`, all discs, and the source. Inspect completion records but

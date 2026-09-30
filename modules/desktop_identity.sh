@@ -22,6 +22,8 @@ desktop_identity() {
     assert_airgap
     desktop_preflight
     install -d -m 755 /opt/glacier2 /opt/glacier2/identity
+    install -m 644 "$ROOT/assets/bitcoin-core.svg" /opt/glacier2/identity/bitcoin-core.svg
+    install -m 644 "$ROOT/assets/BITCOIN-COPYING" /opt/glacier2/identity/BITCOIN-COPYING
     python3 "$ROOT/lib/desktop_identity.py" generate /opt/glacier2/identity "$CHAIN"
     rpc -rpcwallet=watch_only getwalletinfo | jq -e '.private_keys_enabled == false' >/dev/null
     rpc -rpcwallet=watch_only backupwallet "$STATE/watch-only-desktop.dat"
@@ -33,5 +35,5 @@ desktop_identity() {
     cp /opt/glacier2/identity/identity.json "$STATE/public/identity.json"
     log "Recognition code: $(jq -r .code /opt/glacier2/identity/identity.json)"
     log "Background color: $(jq -r .color /opt/glacier2/identity/identity.json)"
-    confirm 'Record the code and color on paper kept separately. Check the desktop and lock/unlock once. GNOME may blur the lock background and hide its text. These visible cues do not prove integrity or prevent exfiltration.' 'IDENTITY RECORDED'
+    log 'Record the code/color on separate paper and check lock/unlock. GNOME may blur the text. Visual cues do not prove integrity or prevent exfiltration.'
 }

@@ -23,11 +23,28 @@ bash -c 'set -euo pipefail; d=$(mktemp -d "$HOME/glacier2-source.XXXXXX"); curl 
 ```
 
 This downloads the repository before disabling networking; the local directory
-is retained. It runs all five modules and pauses for destructive confirmations
-and each disc. Inspect the source first when security matters. This convenience
+is retained. It runs all five modules with **no setup, hardening, mainnet or
+identity confirmation prompts**. Only sudo authentication and the physical CD
+burn/swap/readback prompts remain. Inspect the source first when security matters. This convenience
 command trusts the current GitHub branch, GitHub/TLS, Ubuntu packages and the host.
 For reproducibility, download an independently reviewed commit archive instead.
 Core binaries are separately checked against signed checksums.
+
+### Test without burning CDs
+
+The same command with `--test` performs installation, real network hardening,
+real mainnet wallet generation and desktop setup, but **skips the entire CD module
+and all optical-device checks**. No optical drive is needed:
+
+```bash
+bash -c 'set -euo pipefail; d=$(mktemp -d "$HOME/glacier2-source.XXXXXX"); curl --proto "=https" --tlsv1.2 -fsSL https://github.com/Jakob-997/Glacier-2/archive/refs/heads/main.tar.gz -o "$d/source.tar.gz"; tar -xzf "$d/source.tar.gz" -C "$d"; sudo bash "$d/Glacier-2-main/setup.sh" --test'
+```
+
+From an already downloaded source directory: `sudo bash setup.sh --test`.
+**This is not a dry run, does not select a test network, and leaves you without
+CD recovery media.** It disables networking persistently and creates real keys.
+Do not fund this test setup. Existing-state checks still prevent rerunning over
+the same keys. Test-network selection remains a separate `GLACIER_CHAIN` option.
 
 To select another network or drive after downloading, run from that source folder:
 
@@ -35,7 +52,7 @@ To select another network or drive after downloading, run from that source folde
 sudo env GLACIER_CHAIN=regtest GLACIER_DRIVE=/dev/sr0 bash setup.sh
 ```
 
-Mainnet is already selected unless overridden and requires an extra confirmation. Neither
+Mainnet is already selected unless overridden; no extra confirmation is requested. Neither
 mainnet nor signet setup synchronizes a blockchain. The offline node never needs
 the chain to generate keys. Use a separate online watch-only coordinator later.
 An existing `/var/lib/glacier2`, `/etc/glacier2`, or `/opt/glacier2` causes refusal.
@@ -45,8 +62,8 @@ Do not delete those directories to retry after keys may have been generated.
 
 | File | Responsibility |
 | --- | --- |
-| `setup.sh` | Local-console preflight, exclusive lock, ordered steps, completion records, cleanup |
-| `lib/common.sh` | Logging, confirmations, dedicated Core lifecycle and RPC |
+| `setup.sh`, `lib/options.sh` | Local preflight, `--test` routing, exclusive lock, ordered steps, completion records, cleanup |
+| `lib/common.sh` | Logging, disc confirmations, dedicated Core lifecycle and RPC |
 | `modules/install_core.sh` | Dependencies, pinned 32.0rc2 download, signatures/hash, isolated install |
 | `modules/airgap.sh` | Persistent firewall, radio/service/driver blocks, interface unbinding and kernel module lock |
 | `modules/wallets.sh`, `lib/wallets.py` | Seven blank signers, BIP87 account keys, private signer descriptors, watch-only policy, Core checks |
@@ -93,6 +110,9 @@ changed settings in `~/.local/share/glacier2/desktop-settings.json`.
 An Applications launcher named **Bitcoin Core — Offline Watch Wallet** is added,
 with a desktop copy where a Desktop folder exists and GNOME favorites pinning
 where allowed. Some desktops require right-click **Allow Launching**. The shortcut
+uses the [official Bitcoin Core Qt SVG icon](https://github.com/bitcoin/bitcoin/blob/v32.0rc2/src/qt/res/src/bitcoin.svg),
+bundled unchanged with its upstream license; there is no generated substitute.
+The shortcut
 starts the verified `bitcoin-qt` with networking disabled and a separate,
 user-owned **watch-only** copy at `~/.local/share/glacier2/core`. It does not run
 Qt as root or expose the seven private signer wallets to the desktop account.
@@ -123,17 +143,36 @@ This is signature verification, not an independent reproducible build.
 The runner disables swap, drops all non-loopback IPv4/IPv6 input/output/forwarding,
 blocks radios, masks common network services, strips addresses and brings down
 interfaces, unbinds discovered NICs, blacklists installed network/Bluetooth
-drivers and sets boot parameters. It rebuilds initramfs/GRUB, installs early boot
-enforcement and hotplug rules, and locks further kernel module loading until
-reboot. Loopback stays available for cookie-authenticated Core RPC bound to
+drivers, plus installed NFC/UWB and selected radio/SDR driver families, and sets
+boot parameters. It rebuilds initramfs/GRUB and installs boot enforcement and
+hotplug rules. Each boot reapplies the firewall/radio/link restrictions and locks
+further kernel module loading. Boot-enforcement failure requests emergency-mode
+isolation; that failure path still needs a physical-machine test. Loopback stays
+available for cookie-authenticated Core RPC bound to
 127.0.0.1 on dedicated port 18459. Core also starts with networking disabled.
+
+**Persistent does not mean irreversible or universal.** The kernel's
+`modules_disabled=1` lock cannot be reset within that running kernel. A reboot
+starts a new kernel, so the enabled service reapplies the lock; it does not erase
+the saved firewall, driver blacklist, masked services or boot parameters.
+Root can still alter those saved rules, use already-loaded drivers, or boot another
+OS. See the [kernel module-lock documentation](https://docs.kernel.org/admin-guide/sysctl/kernel.html#modules-disabled).
 
 **This is not a physical airgap or a defense against malicious root/kernel/firmware.**
 Disable devices in firmware, physically remove Wi-Fi/Bluetooth hardware and
-unplug Ethernet. Built-in drivers, already-loaded code, raw Layer-2 traffic,
+unplug Ethernet. Also remove/disconnect cellular/WWAN modems, USB tethering/network
+adapters, NFC/UWB devices, external radios and SDR hardware. `rfkill block all`
+covers radios registered with Linux rfkill, not every transmitter that could exist;
+software blocks are reversible ([kernel rfkill documentation](https://docs.kernel.org/driver-api/rfkill.html)).
+Some radios are accessible directly from user space, without a network driver.
+An antenna alone is not a transmitter; the attached radio hardware must be removed
+or disabled physically. No script can certify “any possible escape,” including
+firmware or acoustic/optical/electromagnetic side channels.
+Built-in drivers, already-loaded code, raw Layer-2 traffic,
 early boot before enforcement, DMA, firmware radios and non-IP channels are not
 eliminated by an inet firewall. Do not attach new USB devices after key creation.
-Optical drivers are loaded before the module lock; some hardware may still need
+In normal mode optical drivers are loaded before the module lock; `--test` skips
+them, including on subsequent boots. Some hardware may still need
 additional drivers and will fail closed. Driver files are deliberately not deleted:
 deletion does not stop built-in/loaded drivers and adds avoidable boot-repair risk.
 

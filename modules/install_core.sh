@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 install_core() {
     local arch archive base expected name fpr actual
+    export DEBIAN_FRONTEND=noninteractive
+    export NEEDRESTART_MODE=a
     case $(uname -m) in x86_64) arch=x86_64-linux-gnu;; aarch64) arch=aarch64-linux-gnu;; *) die 'Unsupported CPU.';; esac
     apt-get update
     apt-get install -y --no-install-recommends ca-certificates curl gnupg jq python3 nftables rfkill iproute2 xorriso eject kmod initramfs-tools util-linux
@@ -45,10 +47,12 @@ install_core() {
     mv "$STATE/extracted/bitcoin-32.0rc2" "$CORE"
     "$CORE/bin/bitcoind" --version | head -n 1 >"$STATE/core-version"
     grep -q 'v32.0.0rc2' "$STATE/core-version" || die 'Unexpected Core version.'
-    xorriso -devices >"$STATE/optical-devices.txt" 2>&1
+    if [[ $SKIP_CD == 0 ]]; then xorriso -devices >"$STATE/optical-devices.txt" 2>&1; fi
     # Load optical and firewall dependencies before the irreversible runtime lock.
-    modprobe sr_mod
-    modprobe sg
+    if [[ $SKIP_CD == 0 ]]; then
+        modprobe sr_mod
+        modprobe sg
+    fi
     modprobe rfkill
     modprobe nf_tables
     start_core

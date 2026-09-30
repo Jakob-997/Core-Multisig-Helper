@@ -4,6 +4,8 @@ DefaultDependencies=no
 After=local-fs.target systemd-modules-load.service
 Before=network-pre.target network.target
 Wants=network-pre.target
+OnFailure=emergency.target
+OnFailureJobMode=isolate
 
 [Service]
 Type=oneshot

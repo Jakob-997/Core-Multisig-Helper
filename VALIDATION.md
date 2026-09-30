@@ -57,3 +57,19 @@ Passing static checks and regtest is **not** approval to use meaningful funds.
   dock pinning remain **unverified on a physical desktop**. The settings unit test
   uses mocks; it does not establish live desktop compatibility. Check these during
   your hardware acceptance run. No Windows desktop settings were changed.
+
+## Unattended setup / no-CD test update
+
+- Bundled the official Core v32.0rc2 SVG and upstream MIT license; a unit test
+  verifies the icon's exact upstream Git blob identity, including line endings.
+- Removed setup/hardening/mainnet/identity confirmation prompts. Added `--test`
+  to select the real setup modules without the CD module or optical-device probes.
+  New Bash option tests cover both module lists and unknown-option rejection.
+- Expanded installed radio-driver blocking and made boot-enforcement failure
+  request emergency isolation. The boot service rechecks the kernel module lock.
+- Python compilation, signature tests and exact-asset tests run locally on Windows.
+  Linux checks are provided by the added GitHub Actions workflow. Local WSL
+  execution is unavailable under this session's permissions; earlier Linux
+  validation results above apply to the earlier revisions only.
+- No physical hardening, reboot failure-path, GNOME or CD tests were performed
+  for this update. `--test` itself is destructive and is not run on this workstation.
