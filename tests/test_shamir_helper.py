@@ -29,6 +29,11 @@ class ShamirHelper(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             validate_share(self.helper, " ".join(words))
 
+    def test_trailing_garbage_rejected(self):
+        share = split_secret(self.helper, bytes(range(32)), 2, 3)[0]
+        with self.assertRaises(RuntimeError):
+            validate_share(self.helper, share + " abc")
+
     def test_mixed_sets_rejected(self):
         a = split_secret(self.helper, bytes(range(32)), 2, 3)
         b = split_secret(self.helper, bytes(reversed(range(32))), 2, 3)
