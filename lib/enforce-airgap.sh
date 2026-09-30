@@ -2,12 +2,10 @@
 set -Eeuo pipefail
 export PATH=/usr/sbin:/usr/bin:/sbin:/bin
 if [[ ${1:-} != --check ]]; then
-    # Optical dependencies must precede the reboot-persistent runtime module lock.
     if [[ $(cat /proc/sys/kernel/modules_disabled) == 0 ]]; then
-        if [[ $(cat /etc/glacier2/skip-cd) == 0 ]]; then
-            modprobe sr_mod
-            modprobe sg
-        fi
+        modprobe rfkill
+        modprobe nf_tables
+    fi
         modprobe rfkill
         modprobe nf_tables
     fi
