@@ -48,7 +48,9 @@ def gs(*args):
     return subprocess.check_output(["gsettings", *args], text=True).strip()
 
 
-def apply(directory, chain):
+def apply(directory, chain, mode="watch-only"):
+    if mode not in {"watch-only", "test-signers"}:
+        raise RuntimeError("Unknown desktop mode")
     if os.geteuid() == 0:
         raise RuntimeError("Apply desktop preferences as the desktop user, not root")
     directory = Path(directory).resolve()
@@ -66,6 +68,7 @@ def apply(directory, chain):
     (wallet / "wallet.dat").chmod(0o600)
     (data / "bitcoin.conf").write_text("networkactive=0\nlisten=0\ndiscover=0\ndnsseed=0\nfixedseeds=0\nlistenonion=0\nnatpmp=0\nserver=0\n")
     (base / "chain").write_text(chain + "\n")
+    (base / "desktop-mode").write_text(mode + "\n")
     uri = (directory / "wallpaper.png").as_uri()
     changes = []
     def setting(schema, key, value):
@@ -89,8 +92,14 @@ def apply(directory, chain):
     desktop_id = "glacier2-bitcoin.desktop"
     applications = Path.home() / ".local/share/applications"
     applications.mkdir(parents=True, exist_ok=True)
-    entry = ("[Desktop Entry]\nType=Application\nName=Bitcoin Core — Offline Watch Wallet\n"
-             "Comment=Glacier-2 public watch-only wallet; networking disabled\n"
+    if mode == "test-signers":
+        name = "Bitcoin Core — Offline Test Wallets"
+        comment = "Glacier-2 test mode: watch-only plus seven signer wallets; networking disabled"
+    else:
+        name = "Bitcoin Core — Offline Watch Wallet"
+        comment = "Glacier-2 public watch-only wallet; networking disabled"
+    entry = ("[Desktop Entry]\nType=Application\n"
+             f"Name={name}\nComment={comment}\n"
              "Exec=/opt/glacier2/identity/launch-qt\nIcon=/opt/glacier2/identity/bitcoin-core.svg\nTerminal=false\n"
              "Categories=Office;Finance;\nStartupWMClass=Bitcoin-qt\n")
     app = applications / desktop_id
@@ -119,6 +128,14 @@ def apply(directory, chain):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 4 or sys.argv[3] not in {"main", "regtest", "signet"}:
-        raise SystemExit("Usage: desktop_identity.py generate|apply DIRECTORY main|regtest|signet")
-    {"generate": generate, "apply": apply}[sys.argv[1]](sys.argv[2], sys.argv[3])
+    if len(sys.argv) not in {4, 5} or sys.argv[3] not in {"main", "regtest", "signet"}:
+        raise SystemExit("Usage: desktop_identity.py generate|apply DIRECTORY main|regtest|signet [watch-only|test-signers]")
+    action, directory, chain = sys.argv[1:4]
+    if action == "generate":
+        if len(sys.argv) != 4:
+            raise SystemExit("generate does not accept a desktop mode")
+        generate(directory, chain)
+    elif action == "apply":
+        apply(directory, chain, sys.argv[4] if len(sys.argv) == 5 else "watch-only")
+    else:
+        raise SystemExit("Action must be generate or apply")
