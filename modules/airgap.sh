@@ -8,7 +8,6 @@ airgap() {
     install -d -m 700 /etc/glacier2
     install -m 700 "$ROOT/lib/enforce-airgap.sh" /etc/glacier2/enforce
     install -m 600 "$ROOT/config/airgap.nft" /etc/glacier2/airgap.nft
-    printf '%s\n' "$SKIP_CD" >/etc/glacier2/skip-cd
     # Refuse a collision instead of deleting someone else's nftables table.
     if nft list table inet glacier2 >/dev/null 2>&1; then die 'Firewall table already exists.'; fi
     nft -f /etc/glacier2/airgap.nft
