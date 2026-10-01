@@ -12,7 +12,7 @@ jobs:
           set -euo pipefail
           mkdir /tmp/core /tmp/data /tmp/state
           tar -xzf bitcoin-core.tar.gz --strip-components=1 -C /tmp/core
-          sed '/^\[\[ \$EUID/,$d' setup.sh >/tmp/functions.sh
+          sed '/^\[\[ ! -e \$STATE/,$d' setup.sh >/tmp/functions.sh
           source /tmp/functions.sh
           CORE=/tmp/core
           DATA=/tmp/data
