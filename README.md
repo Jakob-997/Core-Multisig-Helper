@@ -65,11 +65,11 @@ Many laptops use one removable M.2 card for both Wi-Fi and Bluetooth. Some have 
 
 ### Signer discs are unencrypted
 
-The signer discs contain an unencrypted Bitcoin Core `wallet.dat` and the public descriptor.
+Every CD includes the wallet's **public descriptor**. That descriptor contains all cosigner xpub information needed to derive the wallet's receive and change addresses. Anyone who gets access to **any** CD — including the WATCH ONLY disc — can derive the wallet's addresses and monitor its on-chain activity. In practical terms, access to any one CD means losing the wallet's address privacy.
 
-Anyone who gets one signer disc gets that signer's private key and can derive the wallet's addresses and monitor its on-chain activity. They **cannot spend** unless they obtain enough different signer backups to meet your M-of-N threshold.
+Each signer disc additionally contains an unencrypted Bitcoin Core `wallet.dat` holding that signer's private key. Anyone who gets one signer disc therefore gets **one of the M-of-N signing keys plus the full public descriptor**. They still cannot spend unless they obtain enough different signer backups to satisfy the M-of-N threshold.
 
-This is the main tradeoff: weaker privacy and no at-rest encryption in exchange for a much simpler backup and recovery process with no extra passphrase or encryption secret to lose.
+This is the main tradeoff: the CDs provide no at-rest encryption or descriptor privacy, in exchange for a much simpler backup and recovery process with no additional passphrase or encryption secret to lose.
 
 ## Wallet layout
 
