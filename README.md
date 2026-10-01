@@ -41,7 +41,7 @@ You need:
 - the Ubuntu installer USB
 - a USB or internal CD/DVD writer
 - **seven new blank CD-R discs**
-- Internet access only for the initial Ubuntu/Core installation
+- Internet access for the initial Ubuntu package installation
 - a pen or permanent marker for labeling the discs and recording the recognition code
 
 For a serious setup, start from an official Ubuntu image and verify it before use.
@@ -145,7 +145,7 @@ Enter your Ubuntu password when `sudo` asks for it.
 
 Glacier-2 will:
 
-1. install the required packages and verified Bitcoin Core build;
+1. install the required packages and the frozen Bitcoin Core build bundled with Glacier-2;
 2. harden the machine and disable networking;
 3. create seven independent signer wallets;
 4. build and validate the 3-of-7 descriptor wallet;
@@ -157,6 +157,12 @@ Glacier-2 will:
 Once the hardening stage begins, **do not reconnect the machine to a network**.
 
 > [!NOTE]
+> Glacier-2 includes its frozen Bitcoin Core binary in the repository. Setup does
+> not download Core or repeat upstream signature verification. Trusting a reviewed
+> Glacier commit therefore includes trusting the Core archive committed in that
+> revision. Upstream hashes and maintainer verification instructions are recorded
+> under `vendor/`.
+>
 > The convenience command above downloads the current `main` branch. For a
 > high-assurance setup, review the source first and use a specific reviewed commit
 > instead of trusting a moving branch.
