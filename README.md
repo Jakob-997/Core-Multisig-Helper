@@ -1,132 +1,99 @@
 # Glacier-2
 
-Minimal **configurable m-of-n Bitcoin cold storage**.
+Glacier-2 is a simple Bitcoin multisig generator and spender built around Bitcoin Core.
 
-**3-7 is only the default.** When Glacier starts, it asks for `m` and `n`.
-Press Enter for 3-7, or choose another policy.
+It safely generates a configurable Bitcoin Core multisig wallet, burns each signer backup to its own optical disc, and can later be used to spend from that wallet.
 
-The repository contains only:
+No seed words or private keys need to be written down by hand.
 
-- `setup.sh`
-- this README
-- the frozen Bitcoin Core binary
+## What it does
 
-The script first asks whether you are generating keys or spending.
+### Generate
 
-In generate mode it:
-1. asks for your m-of-n policy;
-2. airgaps the running system;
-3. extracts and starts the bundled Bitcoin Core;
-4. creates `n` independent BIP87 signer wallets;
-5. builds one `wsh(sortedmulti(m,...))` multipath descriptor;
-6. burns one signer to each of `n` CD-Rs and verifies each disc byte-for-byte.
+Glacier:
 
-In spend mode it only airgaps the system and makes the bundled Bitcoin Core available.
+1. airgaps the computer;
+2. asks for your multisig policy, with `3-7` as the default;
+3. generates the independent Bitcoin Core signer wallets;
+4. builds the multisig descriptor;
+5. burns one signer backup to each disc;
+6. verifies every disc after it is written.
 
-## Setup
+For example, `3-7` means any 3 of the 7 signer backups are required to spend.
 
-Use a clean x86-64 Ubuntu 26.04.1 live environment.
+### Spend
 
-For real use, download a specific Glacier release and verify it before running it.
+Glacier can also be started in spend mode.
 
-### Generating keys
+Spend mode airgaps the live computer and makes the bundled Bitcoin Core available for signing transactions with your signer backups.
 
-Before generating keys, while still online, install the extra packages Glacier needs for wallet creation and CD burning:
+## How to use it
 
-```bash
-sudo apt install -y jq nftables rfkill iproute2 xorriso eject
-```
+Glacier-2 is designed for **Ubuntu 26.04.1 x86-64 Live**.
 
-For testing directly from GitHub:
-
-```bash
-sudo apt install -y git jq nftables rfkill iproute2 xorriso eject && git clone --depth 1 --branch simplify-auditability https://github.com/Jakob-997/Glacier-2.git && cd Glacier-2 && sudo ./setup.sh
-```
-
-Connect the optical writer at `/dev/sr0`, have one blank CD-R per signer ready,
-and physically unplug Ethernet.
-
-### Spending
-
-No additional packages need to be installed. With the Glacier files already present, run:
+1. Download the Ubuntu 26.04.1 ISO.
+2. Verify the Ubuntu ISO.
+3. Create an Ubuntu boot USB.
+4. Boot the computer into the Ubuntu live environment. Do not install Ubuntu.
+5. On another computer, download Glacier-2 onto a separate USB.
+6. Verify the Glacier-2 release.
+7. Insert the Glacier USB into the live Ubuntu computer.
+8. Open the Glacier folder and run:
 
 ```bash
 sudo ./setup.sh
 ```
 
-Then choose `spend` at the first prompt.
-
-At startup:
+Glacier asks:
 
 ```text
 Generate keys or spend? [generate]:
 ```
 
-Choose `generate` for first-time wallet creation or `spend` for a signing session.
+Choose `generate` when creating a wallet for the first time, or `spend` when signing a transaction.
 
-In generate mode Glacier then asks:
+## Generating a wallet
+
+Generation requires `jq`, `nftables`, `rfkill`, `iproute2`, `xorriso`, and `eject` to be available in the live Ubuntu session.
+
+Connect the optical writer and have one blank disc ready for each signer.
+
+Glacier then asks:
 
 ```text
 Select m-n [default 3-7]:
 ```
 
-Press Enter for the default 3-7, or type another policy such as `2-5`, `2-of-5`, or `2 of 5`.
+Press Enter for the default `3-7`, or enter another policy such as `2-5`.
 
-For example, **3-7 means any 3 signers are required to spend from a wallet made from 7 independent signer keys.**
+Glacier generates the wallet, burns each signer backup, verifies each disc, and tells you when it is finished.
 
-Glacier installs a persistent software airgap. It blocks all non-loopback network
-traffic with nftables, masks the normal Ubuntu network managers, blocks radios,
-and forces non-loopback interfaces down at boot. Bitcoin Core is also started
-with networking disabled.
+There is no seed phrase or private key to transcribe by hand.
 
-The airgap survives reboot. Accidentally plugging in Ethernet or turning Wi-Fi
-back on should not restore networking. Re-enabling networking requires deliberate
-root-level changes to undo the Glacier airgap.
+## Each signer disc
 
-## Each CD
-
-Each disc contains only:
+Each signer disc contains:
 
 ```text
 wallet.dat
 descriptors.txt
 ```
 
-After each disc verifies, write on the top of the CD with a permanent marker:
+Label each disc with a permanent marker. For a 3-7 wallet:
 
 ```text
 GLACIER-2
-SIGNER 1 OF n
-m-OF-n
+SIGNER 1 OF 7
+3-OF-7
 ```
 
-Use the actual signer number and your actual m-of-n policy on each disc. For example,
-a 3-7 setup should be labeled `SIGNER 1 OF 7`, `3-OF-7`, then
-`SIGNER 2 OF 7`, and so on.
+Then label the others `SIGNER 2 OF 7`, `SIGNER 3 OF 7`, and so on.
 
-Store the discs separately. Any m distinct signer wallets can satisfy the policy.
-
-## Recovery
-
-On a fresh offline Bitcoin Core 32.0rc2 installation, restore any m distinct
-`wallet.dat` files with unique wallet names.
-
-Create a blank watch-only wallet and import the single multipath descriptor from
-`descriptors.txt`. Core expands `<0;1>` into receive and change branches.
-Glacier initially imports indices 0-999.
-
-Create a PSBT with the watch-only wallet, process it independently with m restored
-signers, combine the PSBTs, and finalize.
-
-Prove recovery with disposable funds before using meaningful money.
-
-If setup fails after keys exist, preserve `/var/lib/glacier2`. Do not delete it
-and rerun setup just to get a clean run.
+Store the signer discs separately.
 
 ## Bitcoin Core
 
-`bitcoin-core.tar.gz` is the official Bitcoin Core 32.0rc2 x86-64 Linux archive.
-Trusting a reviewed Glacier commit includes trusting this binary.
+Glacier-2 includes the frozen Bitcoin Core 32.0rc2 x86-64 Linux archive used by the script.
 
 Upstream SHA256:
 
@@ -134,4 +101,4 @@ Upstream SHA256:
 0255103718033e6aee15fa944717fc277e047b845bff1e7408af0ea732d8d0c1
 ```
 
-Glacier is experimental. Physical isolation remains stronger than software isolation.
+Glacier-2 is experimental. Test the complete generation and spending process with disposable funds before using meaningful money.
