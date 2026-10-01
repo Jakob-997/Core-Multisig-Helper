@@ -71,7 +71,7 @@ There are no seed words to transcribe.
 - A **64-bit x86-64 capable laptop or desktop**. A laptop is the expected setup; if you want a physical airgap, prefer one with removable Wi-Fi/Bluetooth hardware.
 - Two USB drives:
   - **USB 1:** verified Ubuntu 26.04.1 x86-64 Desktop Live.
-  - **USB 2:** Core Multisig Helper and, later, PSBT transfer.
+  - **USB 2:** the verified Core Multisig Helper release during setup; after generation, use it only for PSBT transfer.
 - A CD/DVD writer/reader available as `/dev/sr0`.
 - **N + 1 blank CD-Rs**.
 - A permanent marker.
@@ -81,7 +81,7 @@ There are no seed words to transcribe.
 
 Download and verify Ubuntu 26.04.1 Desktop, then write it to **USB 1**.
 
-Download and verify a Core Multisig Helper release, extract it, and copy the extracted `Core-Multisig-Helper` folder to **USB 2**.
+Download a Core Multisig Helper release, verify it against the independently obtained published release hash/signature, extract it, and copy the extracted `Core-Multisig-Helper` folder to **USB 2**. Verify it again from the Ubuntu Live session before first use.
 
 Boot Ubuntu from USB 1 and use the live environment. **Do not install Ubuntu.**
 
@@ -140,6 +140,8 @@ The script first writes the **WATCH ONLY** disc:
 ```text
 watch_only.dat
 descriptors.txt
+setup.sh
+bitcoin-core.tar.gz
 ```
 
 It then writes one private signer disc for each signer:
@@ -147,7 +149,11 @@ It then writes one private signer disc for each signer:
 ```text
 wallet.dat
 descriptors.txt
+setup.sh
+bitcoin-core.tar.gz
 ```
+
+The helper and frozen Core archive are copied onto every disc so future offline sessions can run the exact immutable software used to create the wallet. After generation, do **not** rely on the copy of the helper on USB 2 after that USB has touched an online computer.
 
 Every disc is ejected, reinserted, and byte-compared against the ISO that was written. Do not treat a backup as complete until the script reports it verified.
 
@@ -173,11 +179,13 @@ Whichever online wallet you use, follow these rules:
 
 Create the PSBT online and save it to **USB 2**.
 
-Boot a **fresh Ubuntu Live session**, insert USB 2, navigate to the Core Multisig Helper project directory, then run:
+Boot a **fresh Ubuntu Live session** and insert USB 2 containing the PSBT. Insert the signer CD you want to use, navigate to the mounted signer CD, then run the helper **from the CD**:
 
 ```bash
 sudo ./setup.sh
 ```
+
+This keeps the executable helper and Bitcoin Core on immutable signer media; USB 2 is treated as untrusted transfer media.
 
 Choose:
 
