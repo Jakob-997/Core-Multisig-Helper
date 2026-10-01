@@ -27,7 +27,7 @@ jobs:
           "$C/bin/bitcoin-cli" -regtest -datadir="$A" -rpcport=18459 stop
           sleep 1
           cp /tmp/signer.dat "$B/wallets/signer/wallet.dat"
-          "$C/bin/bitcoind" -regtest -datadir="$B" -daemonwait -networkactive=0 -listen=0 -rpcport=18460 -wallet=signer
+          "$C/bin/bitcoind" -regtest -datadir="$B" -walletdir="$B/wallets" -daemonwait -networkactive=0 -listen=0 -rpcport=18460 -wallet=signer
           "$C/bin/bitcoin-cli" -regtest -datadir="$B" -rpcport=18460 -rpcwallet=signer getwalletinfo | grep -q '"private_keys_enabled": true'
           "$C/bin/bitcoin-cli" -regtest -datadir="$B" -rpcport=18460 stop
           desc='wsh(sortedmulti(3,key1,key2,key3,key4,key5,key6,key7))#test'
