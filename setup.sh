@@ -32,8 +32,33 @@ EOF
 install_core(){
     mkdir "$CORE" "$DATA"
     tar -xzf bitcoin-core.tar.gz --strip-components=1 -C "$CORE"
+    [[ $MODE == spend ]] && return
     "$CORE/bin/bitcoind" -datadir="$DATA" -daemonwait -networkactive=0 -listen=0 -rpcport=18459
     trap 'rpc stop >/dev/null 2>&1 || true' EXIT
+}
+
+spend_wallet(){
+    local src dir desc commas gui_user
+    local -a wallets
+    read -rp 'Insert and mount ONE signer backup disc, then press Enter: ' </dev/tty
+    mapfile -t wallets < <(find /media /run/media /mnt -type f -name wallet.dat 2>/dev/null)
+    (( ${#wallets[@]} == 1 )) || die "Expected exactly one mounted signer wallet.dat; found ${#wallets[@]}."
+    src=${wallets[0]}; dir=${src%/*}
+    [[ -f $dir/descriptors.txt ]] || die 'Signer backup is missing descriptors.txt.'
+    desc=$(<"$dir/descriptors.txt")
+    [[ $desc =~ sortedmulti\(([0-9]+), ]] || die 'Could not read multisig policy.'
+    M=${BASH_REMATCH[1]}; commas=${desc//[^,]/}; N=${#commas}
+    [[ $M -le $N && $N -ge 2 ]] || die 'Invalid multisig policy.'
+    mkdir -p "$DATA/wallets/signer"
+    cp "$src" "$DATA/wallets/signer/wallet.dat"
+    gui_user=${SUDO_USER:-}; [[ -n $gui_user && $gui_user != root ]] || die 'Run Glacier with sudo from the Ubuntu desktop user.'
+    chown -R "$gui_user:$(id -gn "$gui_user")" "$STATE"
+    echo "Wallet policy detected: $M-of-$N multisig. You need $M different signer backups out of $N total."
+    echo "Sign the PSBT in Bitcoin Core and save the partially signed PSBT to your transfer USB."
+    echo "Then close Core, power off, boot a fresh Ubuntu Live session, and repeat with a different signer disc until $M signers have signed."
+    echo "After $M different signers have signed, take the completed transaction online and broadcast it from your node."
+    sudo -u "$gui_user" "$CORE/bin/bitcoin-qt" -datadir="$DATA" -networkactive=0 -listen=0 -wallet=signer
+    echo 'Bitcoin Core closed. Power off before using another signer.'
 }
 
 make_wallet(){
@@ -120,7 +145,7 @@ swapoff -a
 airgap
 mkdir -m 700 "$STATE"
 install_core
-[[ $MODE == spend ]] && { trap - EXIT; echo "Bitcoin Core is running from $CORE/bin."; exit; }
+[[ $MODE == spend ]] && { spend_wallet; exit; }
 make_wallet
 burn_cds
 rpc stop
