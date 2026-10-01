@@ -98,7 +98,7 @@ make_wallet(){
 burn_cds(){
     local i iso sectors
     mkdir "$STATE/cd"
-    cp "$STATE/descriptors.txt" setup.sh bitcoin-core.tar.gz "$STATE/cd/"
+    cp "$STATE/descriptors.txt" "$STATE/cd/"
     rpc -rpcwallet=watch_only backupwallet "$STATE/cd/watch_only.dat"
     iso=$STATE/watch_only.iso
     xorriso -as mkisofs -quiet -r -J -o "$iso" "$STATE/cd"
