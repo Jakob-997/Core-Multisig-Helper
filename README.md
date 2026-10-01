@@ -35,8 +35,6 @@ If you already understand the design and just want the operating instructions, j
 
 ## Project status and references
 
-> **Status:** working testing draft, **not audited**. The multisig construction follows the WSH/BIP87 `sortedmulti` approach used by the Bitcoin Core multisig wizard work in PR #36325. Core wallet generation, backup/restore, watch-only, signing, PSBT finalization, and signer loading have been tested. Test the complete hardware workflow with disposable funds first.
-
 ### Audit status
 
 This is **unaudited software**. AI-assisted review and automated testing have been used extensively to check the code and verify that it does what it is intended to do, but that is not a substitute for an independent expert audit.
