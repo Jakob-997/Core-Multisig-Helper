@@ -17,8 +17,8 @@ wallet(){ local w=$1 m=$2; shift 2; printf '%s\n' "$@" | rpc -rpcwallet="$w" -st
 airgap(){
     nft -f - <<'EOF'
 table inet glacier2 {
- chain input { type filter hook input priority -300; policy drop; iifname "lo" accept }
- chain output { type filter hook output priority -300; policy drop; oifname "lo" accept }
+ chain input { type filter hook input priority -300; policy drop; iifname "lo" accept; }
+ chain output { type filter hook output priority -300; policy drop; oifname "lo" accept; }
 }
 EOF
     rfkill block all
