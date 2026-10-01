@@ -23,7 +23,7 @@ Core Multisig Helper is intentionally narrow, but it creates a real wallet you c
 
 It generates independent Bitcoin Core signer wallets in an airgapped Ubuntu Live session, writes each signer backup to its own optical disc, creates a separate public watch-only backup, and later helps you load one signer at a time for offline signing.
 
-It does **not** try to be a complete wallet application or replace your online Bitcoin node.
+This is **not a complete Bitcoin custody guide unto itself**. It focuses narrowly on generating an M-of-N multisig wallet, backing up the signers, and later using those signers to spend. You choose the M-of-N policy that fits your own threat model and storage plan.
 
 > **Status:** working testing draft, **not audited**. The multisig construction follows the WSH/BIP87 `sortedmulti` approach used by the Bitcoin Core multisig wizard work in PR #36325. The generate, watch-only, sign, combine/finalize, backup, restore, and signer-loading paths have been exercised in automated tests, but you should still test the complete hardware workflow with disposable funds before using meaningful money.
 
@@ -39,6 +39,16 @@ For an `M-of-N` wallet:
 Private keys are generated only after the machine has been airgapped. Swap is disabled and all working wallet state is kept under RAM-backed `/dev/shm`. Each signer should later be used in a **fresh Ubuntu Live session**.
 
 There are no seed words to copy by hand.
+
+### Important privacy and physical-access tradeoff
+
+The signer discs are **not encrypted**. Each signer disc contains an unencrypted Bitcoin Core `wallet.dat` plus the public `descriptors.txt` file.
+
+Anyone who gets access to a signer disc can recover that signer's private key material and can also see the wallet's public descriptor. From the public descriptor they can derive the wallet's addresses and monitor its past and future on-chain activity.
+
+One signer disc by itself is **not enough to spend** unless your policy is 1-of-N. For a normal M-of-N wallet, an attacker must obtain at least **M different signer backups** to satisfy the spending threshold.
+
+This is a deliberate tradeoff. The disadvantage is weaker privacy and no at-rest encryption on the signer media. The advantage is that the backup and recovery design stays very simple: there is no extra passphrase, encryption key, or decryption procedure that could itself be lost or implemented incorrectly.
 
 ## What you need
 
