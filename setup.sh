@@ -106,10 +106,12 @@ if [[ $MODE == generate ]]; then
     MN=${MN//-of-/-}; MN=${MN// of /-}; M=${MN%-*}; N=${MN#*-}
     [[ $M =~ ^[1-9][0-9]*$ && $N =~ ^[1-9][0-9]*$ && $M -le $N && $N -ge 2 && $N -le 20 ]] || die 'Enter m-n, for example 2-5.'
     [[ -b $DRIVE ]] || die "No optical drive: $DRIVE"
-    for c in xorriso eject jq; do command -v "$c" >/dev/null || die "Missing $c."; done
+    command -v dpkg >/dev/null || die 'Missing dpkg.'
 fi
 
 airgap
+[[ $MODE == generate ]] && dpkg -i packages/*.deb >/dev/null
+[[ $MODE == generate ]] && for c in xorriso eject jq; do command -v "$c" >/dev/null || die "Missing $c."; done
 mkdir -m 700 "$STATE"
 install_core
 [[ $MODE == spend ]] && { echo "Bitcoin Core is ready in $CORE/bin."; exit; }
