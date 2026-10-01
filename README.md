@@ -2,8 +2,8 @@
 
 Minimal **configurable m-of-n Bitcoin cold storage**.
 
-**3-of-7 is only the default.** When Glacier starts, it asks for `m` and `n`.
-Press Enter for 3-of-7, or choose another policy.
+**3-7 is only the default.** When Glacier starts, it asks for `m` and `n`.
+Press Enter for 3-7, or choose another policy.
 
 The repository contains only:
 
@@ -47,12 +47,12 @@ sudo ./setup.sh
 At startup:
 
 ```text
-Select m-of-n [3-of-7]:
+Select m-n [default 3-7]:
 ```
 
-Press Enter for the default 3-of-7, or type another policy such as `2-5`, `2-of-5`, or `2 of 5`.
+Press Enter for the default 3-7, or type another policy such as `2-5`, `2-of-5`, or `2 of 5`.
 
-For example, **3-of-7 means any 3 signers are required to spend from a wallet made from 7 independent signer keys.**
+For example, **3-7 means any 3 signers are required to spend from a wallet made from 7 independent signer keys.**
 
 Glacier's software airgap blocks all network traffic except local loopback traffic,
 and `rfkill` blocks radios. Bitcoin Core is also started with networking disabled.
@@ -79,7 +79,7 @@ m-OF-n
 ```
 
 Use the actual signer number and your actual m-of-n policy on each disc. For example,
-a 3-of-7 setup should be labeled `SIGNER 1 OF 7`, `3-OF-7`, then
+a 3-7 setup should be labeled `SIGNER 1 OF 7`, `3-OF-7`, then
 `SIGNER 2 OF 7`, and so on.
 
 Store the discs separately. Any m distinct signer wallets can satisfy the policy.
