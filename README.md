@@ -27,12 +27,17 @@ In spend mode it only airgaps the system and makes the bundled Bitcoin Core avai
 
 Use a clean x86-64 Ubuntu 26.04.1 live environment.
 
-Before running Glacier, while still online, make sure these packages are installed:
-`git`, `jq`, `nftables`, `rfkill`, `iproute2`, `xorriso`, and `eject`.
-
 For real use, download a specific Glacier release and verify it before running it.
 
-For testing, run:
+### Generating keys
+
+Before generating keys, while still online, install the extra packages Glacier needs for wallet creation and CD burning:
+
+```bash
+sudo apt install -y jq nftables rfkill iproute2 xorriso eject
+```
+
+For testing directly from GitHub:
 
 ```bash
 sudo apt install -y git jq nftables rfkill iproute2 xorriso eject && git clone --depth 1 --branch simplify-auditability https://github.com/Jakob-997/Glacier-2.git && cd Glacier-2 && sudo ./setup.sh
@@ -41,11 +46,15 @@ sudo apt install -y git jq nftables rfkill iproute2 xorriso eject && git clone -
 Connect the optical writer at `/dev/sr0`, have one blank CD-R per signer ready,
 and physically unplug Ethernet.
 
-Then run Glacier:
+### Spending
+
+No additional packages need to be installed. With the Glacier files already present, run:
 
 ```bash
 sudo ./setup.sh
 ```
+
+Then choose `spend` at the first prompt.
 
 At startup:
 
