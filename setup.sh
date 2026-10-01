@@ -73,7 +73,7 @@ burn_cds(){
     cp "$STATE/descriptors.txt" "$STATE/cd/"
     rpc -rpcwallet=watch_only backupwallet "$STATE/cd/watch_only.dat"
     iso=$STATE/watch_only.iso
-    xorriso -as mkisofs -quiet -R -J -o "$iso" "$STATE/cd"
+    xorriso -as mkisofs -quiet -r -J -o "$iso" "$STATE/cd"
     read -rp "Insert blank CD-R for WATCH ONLY, then press Enter: " </dev/tty
     xorriso -as cdrecord -v dev="$DRIVE" -dao "$iso"
     eject "$DRIVE"
@@ -87,7 +87,7 @@ burn_cds(){
         rm -f "$STATE/cd/wallet.dat"
         rpc -rpcwallet="signer_$i" backupwallet "$STATE/cd/wallet.dat"
         iso=$STATE/signer_$i.iso
-        xorriso -as mkisofs -quiet -R -J -o "$iso" "$STATE/cd"
+        xorriso -as mkisofs -quiet -r -J -o "$iso" "$STATE/cd"
         read -rp "Insert blank CD-R for signer $i, then press Enter: " </dev/tty
         xorriso -as cdrecord -v dev="$DRIVE" -dao "$iso"
         eject "$DRIVE"
