@@ -5,12 +5,10 @@ environment, not a supported target for running `setup.sh`.**
 
 Completed:
 
-- Downloaded the official Core 32.0rc2 Linux archive. Verified the SHA256SUMS
-  signatures from the two pinned primary fingerprints (Ava Chow and Hennadii
-  Stepanov), then verified the selected archive's SHA256 checksum before execution.
+- Before vendoring Core 32.0rc2, downloaded the official Linux archive, verified
+  the SHA256SUMS signatures from the pinned Ava Chow and Hennadii Stepanov keys,
+  and verified the selected archive's SHA256 checksum before execution.
 - Checked all Bash sources with `bash -n` and ShellCheck 0.9.0.
-- Tested the signature parser's positive case, missing/duplicate/untrusted
-  signatures and bad/expired/revoked signature status rejection.
 - Ran the production Core lifecycle helper through start, stop and restart.
   Both runs reported Core version 320000, `networkactive=false`, zero connections.
 - Ran `tests/integration.py` with the verified real Core binaries. Created seven
@@ -67,7 +65,7 @@ Passing static checks and regtest is **not** approval to use meaningful funds.
   New Bash option tests cover both module lists and unknown-option rejection.
 - Expanded installed radio-driver blocking and made boot-enforcement failure
   request emergency isolation. The boot service rechecks the kernel module lock.
-- Python compilation, signature tests and exact-asset tests run locally on Windows.
+- Python compilation and exact-asset tests run locally on Windows.
   Linux checks are provided by the added GitHub Actions workflow. Local WSL
   execution is unavailable under this session's permissions; earlier Linux
   validation results above apply to the earlier revisions only.
@@ -91,3 +89,18 @@ Passing static checks and regtest is **not** approval to use meaningful funds.
   details. `RECOVERY.md` remains the destructive acceptance procedure.
 - No new physical Ubuntu, TPM/FDE, optical-disc, reboot, or hardware-isolation
   acceptance test was performed as part of this documentation/update pass.
+
+
+## Frozen Core / repository trust update — 2026-10-01
+
+- Vendored the official Bitcoin Core 32.0rc2 x86_64 and aarch64 Linux archives
+  directly under `vendor/`.
+- Recorded their upstream Guix-reproducible SHA256 values in
+  `vendor/SHA256SUMS`.
+- Removed runtime Core downloading, builder-key fetching, GPG verification, the
+  signature-status parser, and its unit tests.
+- The installer now treats the reviewed Glacier revision as the trust root for
+  the bundled Core artifact and still checks the extracted binary's expected
+  version before use.
+- This simplifies the live setup path but intentionally means a user who trusts a
+  Glacier revision is also trusting the Core binary contained in that revision.
