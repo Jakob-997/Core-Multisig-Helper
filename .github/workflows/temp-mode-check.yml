@@ -1,9 +1,0 @@
-name: Temporary mode check
-on: [push]
-jobs:
-  test:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-      - run: sudo apt-get update -qq && sudo apt-get install -y shellcheck
-      - run: bash -n setup.sh && shellcheck setup.sh
