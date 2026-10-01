@@ -39,7 +39,7 @@ sudo env GLACIER_DRIVE=/dev/sr1 ./setup.sh
 ```
 
 At startup, press Enter for the default 3-of-7 policy or enter your own m and n
-(1 <= m <= n <= 20). Each disc contains only `wallet.dat` and `descriptors.txt`.
+(1 <= m <= n, with 2 <= n <= 20). Each disc contains only `wallet.dat` and `descriptors.txt`.
 Label them Signer 1 through Signer n and store them separately. Any m distinct
 signer wallets can satisfy the policy.
 
