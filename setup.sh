@@ -4,7 +4,7 @@ set +x
 umask 077
 export LC_ALL=C PATH=/usr/sbin:/usr/bin:/sbin:/bin
 
-ROOT=$(cd -- "$(dirname -- "\${BASH_SOURCE[0]}")" && pwd -P)
+ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 STATE=/var/lib/glacier2
 CORE=/opt/glacier2/core
 CORE_VERSION=32.0rc2
@@ -18,7 +18,7 @@ rpc() { "$CORE/bin/bitcoin-cli" -datadir="$DATA" -chain="$CHAIN" -rpcport=18459 
 stop_core() {
     (( CORE_STARTED )) || return 0
     rpc stop >/dev/null 2>&1 || true
-    [[ -z \${CORE_PID:-} ]] || wait "$CORE_PID" || true
+    [[ -z ${CORE_PID:-} ]] || wait "$CORE_PID" || true
     CORE_STARTED=0
 }
 
@@ -66,7 +66,7 @@ desktop_user() {
 }
 
 desktop_preflight() {
-    DESKTOP_USER=\${SUDO_USER:-}
+    DESKTOP_USER=${SUDO_USER:-}
     [[ -n $DESKTOP_USER && $DESKTOP_USER != root ]] || die 'Run sudo from your logged-in Ubuntu GNOME desktop user.'
     DESKTOP_UID=$(id -u "$DESKTOP_USER")
     DESKTOP_GID=$(id -g "$DESKTOP_USER")
@@ -168,7 +168,7 @@ airgap() {
     : >"$STATE/blocked-modules"
     while IFS= read -r path; do
         module=$(basename "$path")
-        module=\${module%%.ko*}
+        module=${module%%.ko*}
         [[ $module =~ ^[a-zA-Z0-9_-]+$ ]] || die 'Unexpected module filename.'
         printf '%s\n' "$module" >>"$STATE/blocked-modules"
     done < <(find /lib/modules -type f \( \
@@ -180,7 +180,7 @@ airgap() {
 
     printf '%s\n' bluetooth btusb cfg80211 mac80211 >"$STATE/boot-blocked-modules"
     for path in /sys/class/net/*; do
-        [[ \${path##*/} == lo ]] && continue
+        [[ ${path##*/} == lo ]] && continue
         if [[ -L $path/device/driver/module ]]; then
             module=$(basename "$(readlink -f "$path/device/driver/module")")
             printf '%s\n' "$module" >>"$STATE/blocked-modules"
@@ -192,10 +192,10 @@ airgap() {
     while read -r module; do printf 'blacklist %s\ninstall %s /bin/false\n' "$module" "$module"; done <"$STATE/blocked-modules" >/etc/modprobe.d/glacier2.conf
 
     for path in /sys/class/net/*; do
-        [[ \${path##*/} == lo ]] && continue
-        ip address flush dev "\${path##*/}"
-        ip -6 address flush dev "\${path##*/}"
-        ip link set dev "\${path##*/}" down
+        [[ ${path##*/} == lo ]] && continue
+        ip address flush dev "${path##*/}"
+        ip -6 address flush dev "${path##*/}"
+        ip link set dev "${path##*/}" down
         if [[ -L $path/device/driver && -e $path/device/driver/unbind ]]; then
             driver=$(readlink -f "$path/device/driver")
             device=$(basename "$(readlink -f "$path/device")")
@@ -334,7 +334,7 @@ main() {
 
     [[ $EUID == 0 ]] || die 'Run with sudo bash setup.sh on a disposable Ubuntu installation.'
     (( SKIP_CD )) || [[ -t 0 && -t 1 ]] || die 'A local terminal is required for swapping CDs. Use --test to skip CDs.'
-    [[ -z \${SSH_CONNECTION:-}\${SSH_TTY:-} ]] || die 'Do not run over SSH.'
+    [[ -z ${SSH_CONNECTION:-}${SSH_TTY:-} ]] || die 'Do not run over SSH.'
     [[ -d /run/systemd/system ]] || die 'A booted systemd host is required.'
 
     # shellcheck source=/dev/null
@@ -351,9 +351,9 @@ main() {
     exec 9>/run/lock/glacier2.lock
     flock -n 9 || die 'Another Glacier runner is active.'
 
-    CHAIN=\${GLACIER_CHAIN:-main}
+    CHAIN=${GLACIER_CHAIN:-main}
     [[ $CHAIN == main || $CHAIN == regtest || $CHAIN == signet ]] || die 'GLACIER_CHAIN must be main, regtest or signet.'
-    DRIVE=\${GLACIER_DRIVE:-/dev/sr0}
+    DRIVE=${GLACIER_DRIVE:-/dev/sr0}
     (( SKIP_CD )) || [[ $DRIVE =~ ^/dev/sr[0-9]+$ && -b $DRIVE ]] || die 'Set GLACIER_DRIVE to an optical block device, for example /dev/sr0.'
     DATA=$STATE/core-data
 
@@ -380,4 +380,4 @@ main() {
     fi
 }
 
-[[ \${BASH_SOURCE[0]} != "$0" ]] || main "$@"
+[[ ${BASH_SOURCE[0]} != "$0" ]] || main "$@"
