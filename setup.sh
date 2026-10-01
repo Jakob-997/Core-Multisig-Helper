@@ -22,6 +22,7 @@ table inet glacier2 {
  chain output { type filter hook output priority -300; policy drop; oifname "lo" accept; }
 }
 EOF
+    systemctl stop NetworkManager.service wpa_supplicant.service ModemManager.service systemd-networkd.service 2>/dev/null || true
     rfkill block all 2>/dev/null || true
     for i in /sys/class/net/*; do n=${i##*/}; [ "$n" = lo ] || ip link set "$n" down 2>/dev/null || true; done
 }
@@ -102,7 +103,7 @@ burn_cds(){
 read -rp 'Generate keys or spend? [generate]: ' MODE </dev/tty; MODE=${MODE:-generate}
 [[ $MODE == generate || $MODE == spend ]] || die 'Enter generate or spend.'
 [[ ! -e $STATE ]] || { [[ $MODE == generate ]] || die 'Existing Glacier state.'; rpc getblockchaininfo >/dev/null 2>&1 && die 'A Glacier wallet is still running. Finish it or reboot before generating another.'; read -rp 'WARNING: A previous Glacier wallet was detected. Type NEW to permanently delete it and create a completely new wallet. Old CDs/backups belong to the old wallet and MUST NOT be mixed with the new one: ' RESET </dev/tty; [[ $RESET == NEW ]] || die 'Canceled.'; rm -rf -- "$STATE"; }
-for c in nft rfkill ip swapoff sha256sum; do command -v "$c" >/dev/null || die "Missing $c."; done
+for c in nft rfkill ip systemctl swapoff sha256sum; do command -v "$c" >/dev/null || die "Missing $c."; done
 
 if [[ $MODE == generate ]]; then
     read -rp 'Select m-n [default 3-7]: ' MN </dev/tty; MN=${MN:-3-7}
