@@ -3,8 +3,7 @@
 Minimal **configurable m-of-n Bitcoin cold storage**.
 
 **3-of-7 is only the default.** When Glacier starts, it asks for `m` and `n`.
-Press Enter for 3-of-7, or choose another policy. Glacier supports
-`1 <= m <= n` with `2 <= n <= 20`.
+Press Enter for 3-of-7, or choose another policy.
 
 The repository contains only:
 
@@ -15,7 +14,7 @@ The repository contains only:
 The script:
 
 1. asks for your m-of-n policy;
-2. blocks non-loopback network traffic and radios;
+2. airgaps the running system by blocking all non-loopback network traffic and radios;
 3. extracts and starts the bundled Bitcoin Core with networking disabled;
 4. creates `n` independent BIP87 signer wallets;
 5. builds one `wsh(sortedmulti(m,...))` multipath descriptor;
@@ -46,7 +45,12 @@ n [7]:
 
 Press Enter twice for 3-of-7, or enter your own m and n.
 
-After the airgap is applied, do not reconnect the machine.
+Glacier's software airgap blocks all network traffic except local loopback traffic,
+and `rfkill` blocks radios. Bitcoin Core is also started with networking disabled.
+
+This airgap applies to the current boot; it is not a permanent OS modification.
+Do not reconnect the machine, and physically unplug Ethernet and disable/remove
+radios where practical.
 
 ## Each CD
 
@@ -57,8 +61,19 @@ wallet.dat
 descriptors.txt
 ```
 
-Label the discs Signer 1 through Signer n and store them separately.
-Any m distinct signer wallets can satisfy the policy.
+After each disc verifies, write on the top of the CD with a permanent marker:
+
+```text
+GLACIER-2
+SIGNER 1 OF n
+m-OF-n
+```
+
+Use the actual signer number and your actual m-of-n policy on each disc. For example,
+a 3-of-7 setup should be labeled `SIGNER 1 OF 7`, `3-OF-7`, then
+`SIGNER 2 OF 7`, and so on.
+
+Store the discs separately. Any m distinct signer wallets can satisfy the policy.
 
 ## Recovery
 
