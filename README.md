@@ -63,6 +63,8 @@ For stronger assurance, use a machine with **no physical network path**. Remove 
 
 Many laptops use one removable M.2 card for both Wi-Fi and Bluetooth. Some have soldered radios. If physical airgapping matters to you, use a laptop with removable radios or a desktop with no built-in wireless hardware.
 
+Once a laptop has been used to generate this wallet or load a private signer, treat it as **permanently quarantined**. Do not return it to normal use, and do not reconnect it to the Internet, Wi-Fi, Bluetooth, Ethernet, or any other network again.
+
 ### Signer discs are unencrypted
 
 Every CD includes the wallet's **public descriptor**. That descriptor contains all cosigner xpub information needed to derive the wallet's receive and change addresses. Anyone who gets access to **any** CD — including the WATCH ONLY disc — can derive the wallet's addresses and monitor its on-chain activity. In practical terms, access to any one CD means losing the wallet's address privacy.
