@@ -50,7 +50,7 @@ make_wallet(){
     for n in {1..7}; do
         wallet=signer_$n
         call "" createwallet "$wallet" false true >/dev/null
-        root=$(call "$wallet" addhdkey | jq -r .xpub)
+        root=$(rpc -rpcwallet="$wallet" addhdkey | jq -r .xpub)
         account=$(call "$wallet" derivehdkey "$path" "{\"hdkey\":\"$root\"}")
         roots[n]=$root
         origins[n]=$(jq -r .origin <<<"$account")
