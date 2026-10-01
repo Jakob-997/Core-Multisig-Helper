@@ -1,0 +1,36 @@
+name: Temporary Core wizard comparison
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y shellcheck jq
+      - run: shellcheck setup.sh && bash -n setup.sh
+      - name: Compare construction with PR 36325 flow
+        run: |
+          set -euo pipefail
+          mkdir /tmp/core /tmp/data /tmp/state
+          tar -xzf bitcoin-core.tar.gz --strip-components=1 -C /tmp/core
+          sed '/^read -rp.*m \[3\]/,$d' setup.sh >/tmp/functions.sh
+          source /tmp/functions.sh
+          CORE=/tmp/core
+          DATA=/tmp/data
+          STATE=/tmp/state
+          M=2
+          N=3
+          /tmp/core/bin/bitcoind -datadir=/tmp/data -daemonwait -networkactive=0 -listen=0 -rpcport=18459
+          trap '/tmp/core/bin/bitcoin-cli -datadir=/tmp/data -rpcport=18459 stop || true' EXIT
+          make_wallet
+          d=$(cat /tmp/state/descriptors.txt)
+          [[ "$d" == wsh\(sortedmulti\(2,*"/<0;1>/*"* ]]
+          info=$(/tmp/core/bin/bitcoin-cli -datadir=/tmp/data -rpcport=18459 getdescriptorinfo "$d")
+          test "$(jq '.multipath_expansion|length' <<<"$info")" -eq 2
+          mapfile -t addrs < <(/tmp/core/bin/bitcoin-cli -datadir=/tmp/data -rpcport=18459 deriveaddresses "$d" 0 | jq -r '.[]')
+          test "${#addrs[@]}" -eq 2
+          for i in 1 2 3; do
+            got_receive=$(/tmp/core/bin/bitcoin-cli -datadir=/tmp/data -rpcport=18459 -rpcwallet=signer_$i getnewaddress "" bech32)
+            got_change=$(/tmp/core/bin/bitcoin-cli -datadir=/tmp/data -rpcport=18459 -rpcwallet=signer_$i getrawchangeaddress bech32)
+            test "$got_receive" = "${addrs[0]}"
+            test "$got_change" = "${addrs[1]}"
+          done
