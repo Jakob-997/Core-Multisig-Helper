@@ -52,6 +52,8 @@ Select m-of-n [3-of-7]:
 
 Press Enter for the default 3-of-7, or type another policy such as `2-5`, `2-of-5`, or `2 of 5`.
 
+For example, **3-of-7 means any 3 signers are required to spend from a wallet made from 7 independent signer keys.**
+
 Glacier's software airgap blocks all network traffic except local loopback traffic,
 and `rfkill` blocks radios. Bitcoin Core is also started with networking disabled.
 
