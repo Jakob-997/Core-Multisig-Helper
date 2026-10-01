@@ -7,7 +7,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 STATE=/var/lib/glacier2
 CORE=$STATE/core
 DATA=$STATE/data
-DRIVE=${GLACIER_DRIVE:-/dev/sr0}
+DRIVE=/dev/sr0
 
 die(){ echo "ERROR: $*" >&2; exit 1; }
 rpc(){ "$CORE/bin/bitcoin-cli" -datadir="$DATA" -rpcport=18459 "$@"; }
