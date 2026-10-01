@@ -1,85 +1,136 @@
-# Glacier-2
+# Core Multisig Helper
 
-Glacier-2 is a simple Bitcoin multisig generator and spender built around Bitcoin Core.
+```text
+             /\
+            /  \
+           / /\ \
+          /_/  \_\
+     CORE MULTISIG HELPER
+```
 
-It safely generates a configurable Bitcoin Core multisig wallet, burns each signer backup to its own optical disc, and can later be used to spend from that wallet.
+A small Bitcoin Core helper for creating and using offline multisig wallets.
 
-No seed words or private keys need to be written down by hand.
+Core Multisig Helper is intentionally narrow. It generates independent Bitcoin Core signer wallets in an airgapped Ubuntu Live session, writes each signer backup to its own optical disc, creates a separate public watch-only backup, and later helps you load one signer at a time for offline PSBT signing.
 
-## What it does
+It does **not** try to be a complete wallet application or replace your online Bitcoin node.
 
-### Generate
+> **Status:** polished testing draft. Test the complete generate → restore → sign → broadcast workflow with disposable funds before using meaningful money.
 
-Glacier:
+## Overview
 
-1. airgaps the computer;
-2. asks you to explicitly choose your multisig policy in `m-n` format;
-3. generates the independent Bitcoin Core signer wallets;
-4. builds the multisig descriptor;
-5. burns one public WATCH ONLY disc for the online computer;
-6. burns one private signer backup to each signer disc;
-7. verifies every disc after it is written.
+For an `M-of-N` wallet:
 
-For example, `3-7` means any 3 of the 7 signer backups are required to spend.
+- `M` is the number of different signer backups required to spend.
+- `N` is the total number of private signer backups.
+- Core Multisig Helper creates **N private signer discs + 1 public WATCH ONLY disc**.
+- Example: `3-7` requires 3 signers out of 7 and uses **8 discs total**.
 
-### Spend
+Private keys are generated only after the machine has been airgapped. Swap is disabled and all working wallet state is kept under RAM-backed `/dev/shm`. Each signer should later be used in a **fresh Ubuntu Live session**.
 
-Spend mode is designed for one signer per fresh Ubuntu Live session.
+There are no seed words to copy by hand.
 
-Glacier airgaps the computer before loading any signer backup, asks you to insert and mount exactly one signer disc, copies its `wallet.dat` into RAM, reads the public descriptor to detect the wallet's `M-of-N` policy, and launches the bundled Bitcoin Core GUI with that RAM copy.
+## What you need
 
-For example, a 3-of-7 wallet tells you that 3 different signer backups out of 7 total are required. Sign the PSBT in Bitcoin Core, save the partially signed PSBT to your transfer USB, close Core, power off, boot a fresh Ubuntu Live session, and repeat with a different signer disc until the required number of signers have signed. Then take the completed transaction online and broadcast it from your node.
+Prepare these before creating a wallet:
 
-The signer backup media is never used as Core's working wallet; Glacier copies it into `/dev/shm` first so the backup remains untouched.
+- **Two USB drives**
+  - **USB 1 — Ubuntu:** verified Ubuntu 26.04.1 x86-64 Desktop Live.
+  - **USB 2 — Transfer:** Core Multisig Helper plus, later, the PSBT being signed.
+- **A CD/DVD writer and reader** visible to Linux as `/dev/sr0`.
+- **N + 1 blank CD-Rs**
+  - N private signer discs.
+  - 1 public WATCH ONLY disc.
+- **A permanent marker** for labeling every disc immediately.
+- **An online Bitcoin wallet/node** for creating PSBTs, monitoring the wallet, and broadcasting completed transactions.
 
-## How to use it
+For a `3-7` setup, bring 8 blank discs.
 
-Glacier-2 is designed for **Ubuntu 26.04.1 x86-64 Live**.
+## 1. Prepare Ubuntu
 
-1. Download the Ubuntu 26.04.1 ISO.
-2. Verify the Ubuntu ISO.
-3. Create an Ubuntu boot USB.
-4. Boot the computer into the Ubuntu live environment. Do not install Ubuntu.
-5. On another computer, download Glacier-2 onto a separate USB.
-6. Verify the Glacier-2 release.
-7. Insert the Glacier USB into the live Ubuntu computer.
-8. Open the Glacier folder and run:
+1. Download the Ubuntu 26.04.1 x86-64 Desktop ISO from Ubuntu.
+2. Verify the ISO using Ubuntu's published verification information.
+3. Write it to **USB 1**.
+4. Boot the computer from USB 1 and choose the live environment.
+5. **Do not install Ubuntu to the computer.**
+
+The signing computer is expected to be disposable: boot live, perform one operation, then power it completely off.
+
+## 2. Prepare the transfer USB
+
+On another computer:
+
+1. Obtain a released/tagged copy of Core Multisig Helper.
+2. Verify the release/artifacts before using it with real funds.
+3. Put the project on **USB 2**.
+
+USB 2 is also the transfer media used later for PSBT files. It should not contain signer private-key backups.
+
+## 3. Generate a wallet
+
+Boot a fresh Ubuntu Live session.
+
+Insert:
+
+- USB 2 containing Core Multisig Helper;
+- the optical writer;
+- your blank CD-Rs.
+
+Open the project folder and run:
 
 ```bash
 sudo ./setup.sh
 ```
 
-Glacier asks:
+The program asks:
 
 ```text
 Select mode: generate or spend:
 ```
 
-Enter `generate` when creating a wallet for the first time, or `spend` when signing a transaction. There is no default; you must choose one.
+Enter:
 
-## Generating a wallet
+```text
+generate
+```
 
-Ubuntu 26.04.1 Desktop Live already includes the tools Glacier needs for generation, including xorriso. Glacier does not install or download packages.
-
-Connect the optical writer and have one blank disc for the WATCH ONLY wallet plus one blank disc for each signer. A 3-7 wallet therefore needs 8 discs.
-
-Glacier then asks:
+Then enter the multisig policy in `m-n` format:
 
 ```text
 Enter multisig policy in m-n format (for example 3-7):
 ```
 
-Enter the threshold first and total number of signer backups second, separated by a hyphen. For example, `3-7` means 3 signatures are required from 7 total signer backups. There is no default; you must enter a policy.
+For example:
 
-Glacier disables swap and keeps its working state in RAM. It generates the wallet, burns the WATCH ONLY disc and each signer backup, verifies every disc, and tells you when it is finished.
+```text
+3-7
+```
 
-There is no seed phrase or private key to transcribe by hand. When generation is complete, power the live computer off completely; the temporary Glacier state disappears with the live session.
+means **3 different signers are required from 7 total signer backups**.
 
-## Watch-only disc
+There is no default. You must explicitly choose the mode and policy.
 
-Glacier first burns a separate WATCH ONLY disc for the online computer. It contains `watch_only.dat` and `descriptors.txt`: a Bitcoin Core watch-only wallet plus the public multisig descriptor. It contains no private keys.
+Before any private keys are generated, the program disables swap, applies the firewall airgap, stops network managers, blocks radios, brings network interfaces down, and prints:
 
-## Each signer disc
+```text
+AIRGAP ACTIVE — networking disabled before key generation.
+```
+
+It then generates the wallet in RAM.
+
+## 4. Burn the backups
+
+Core Multisig Helper first asks for the **WATCH ONLY** disc.
+
+That public disc contains:
+
+```text
+watch_only.dat
+descriptors.txt
+```
+
+It contains the public multisig wallet information and **no private keys**.
+
+Then the program asks for each private signer disc in order.
 
 Each private signer disc contains:
 
@@ -88,37 +139,154 @@ wallet.dat
 descriptors.txt
 ```
 
-Label each disc with a permanent marker. For a 3-7 wallet:
+After writing each disc, the program ejects it, asks you to reinsert it, and byte-compares the disc against the ISO that was written.
+
+Do not consider a backup complete until the program reports that disc as verified.
+
+### Label immediately
+
+For a `3-7` wallet, label the public disc something like:
 
 ```text
-GLACIER-2
-SIGNER 1 OF 7
+CORE MULTISIG HELPER
+WATCH ONLY
 3-OF-7
+PUBLIC
 ```
 
-Then label the others `SIGNER 2 OF 7`, `SIGNER 3 OF 7`, and so on.
+Label the private discs:
 
-Store the signer discs separately.
+```text
+CORE MULTISIG HELPER
+SIGNER 1 OF 7
+3-OF-7
+PRIVATE
+```
+
+then `SIGNER 2 OF 7`, `SIGNER 3 OF 7`, and so on.
+
+Store the private signer discs separately.
+
+When generation is completely finished, **power the live computer off**. The temporary RAM state disappears with the session.
+
+## 5. Set up the online wallet
+
+The online side is outside the core purpose of this project. Its job is to:
+
+- monitor the public wallet;
+- create unsigned or partially signed PSBTs;
+- receive signed PSBTs back from USB 2;
+- broadcast the completed transaction.
+
+### Preferred: your own Bitcoin Core node
+
+The preferred online setup is your own Bitcoin Core node using the WATCH ONLY wallet.
+
+For privacy, Bitcoin Core can be configured to use Tor.
+
+If you use Tails as the online workstation, remember that running a persistent full node requires persistent or external blockchain storage. That setup is outside this project's scope.
+
+### Alternative: Sparrow
+
+Sparrow can also create compatible PSBTs.
+
+You can connect Sparrow to your own node, or to a public Electrum server. If using a public Electrum server, using Tor is strongly preferable for privacy.
+
+A public Electrum server adds privacy and data-trust assumptions compared with using your own Bitcoin Core node. It still does not possess your signer private keys. Treat the offline signer as the final checkpoint: verify the destination, amount, and fee before signing.
+
+## 6. Sign a PSBT
+
+Put the PSBT from your online wallet onto **USB 2**.
+
+Boot a **fresh Ubuntu Live session** and insert USB 2.
+
+Run:
+
+```bash
+sudo ./setup.sh
+```
+
+Choose:
+
+```text
+spend
+```
+
+The machine is airgapped before any signer wallet is loaded. You will see:
+
+```text
+AIRGAP ACTIVE — networking disabled before signer wallet loading.
+```
+
+The program then asks you to insert and mount **one** signer backup disc.
+
+It:
+
+1. finds exactly one `wallet.dat`;
+2. confirms that `descriptors.txt` is present;
+3. reads the public descriptor to determine the `M-of-N` policy;
+4. copies the signer wallet from the disc into RAM;
+5. leaves the backup disc itself untouched;
+6. opens the RAM copy in the bundled Bitcoin Core GUI.
+
+For a `3-7` wallet it will tell you that **3 different signer backups out of 7 total** are required.
+
+In Bitcoin Core:
+
+1. Load the PSBT from USB 2.
+2. Review the transaction carefully.
+3. Sign it.
+4. Save the partially signed PSBT back to USB 2.
+5. Close Bitcoin Core.
+6. Power the computer completely off.
+
+Then boot another fresh Ubuntu Live session and repeat the process with a **different signer disc**.
+
+Continue until `M` different signer backups have signed.
+
+Example:
+
+```text
+3-of-7 → sign with any 3 different signer discs
+```
+
+Once the signing threshold is satisfied, take USB 2 back to the online computer and broadcast the completed transaction from your node/wallet.
+
+## Security model
+
+Core Multisig Helper deliberately keeps the design small:
+
+- Ubuntu Live instead of an installed signing OS.
+- No network access while generating or loading signer keys.
+- Kernel nftables DROP policy plus radio/interface shutdown.
+- Bitcoin Core additionally runs with networking disabled.
+- Swap disabled.
+- Working wallet state stored in RAM-backed `/dev/shm`.
+- One private signer per optical disc.
+- One signer loaded per fresh live session.
+- Private signer media is copied into RAM rather than used as Core's writable wallet.
+- Public descriptor/watch-only backup is kept separate from private signer backups.
+
+During initial generation, all signer keys necessarily coexist on the one clean offline generation machine. After backups are created, normal signing uses only one signer per fresh session.
 
 ## Bitcoin Core
 
-Glacier-2 includes the frozen Bitcoin Core 32.0rc2 x86-64 Linux archive used by the script.
+The repository currently includes the frozen Bitcoin Core **32.0rc2 x86-64 Linux** archive used by the script.
 
-Upstream SHA256:
+The script verifies this SHA256 before starting Core:
 
 ```text
 0255103718033e6aee15fa944717fc277e047b845bff1e7408af0ea732d8d0c1
 ```
 
+Before treating this project as finalized for real funds, the bundled Core version should be reviewed/frozen again and the entire hardware workflow retested.
 
 ## Testing only
 
-For quick testing, you can install Git, clone the current `main` branch, and run Glacier with:
+For quick development testing, you can install Git, clone the current `main` branch, and launch the helper:
 
 ```bash
-sudo apt install -y git && git clone --depth 1 https://github.com/Jakob-997/Glacier-2.git && cd Glacier-2 && sudo ./setup.sh
+sudo apt install -y git && git clone --depth 1 https://github.com/Jakob-997/Glacier-2.git Core-Multisig-Helper && cd Core-Multisig-Helper && sudo ./setup.sh
 ```
 
-**Do not use this shortcut for real funds.** For an actual Glacier setup, independently verify the Ubuntu ISO and the Glacier-2 release/artifacts before moving them onto the live computer.
-
-Glacier-2 is experimental. Test the complete generation and spending process with disposable funds before using meaningful money.
+**Do not use this shortcut for real funds.** A real setup should use independently verified Ubuntu and Core Multisig Helper release artifacts rather than trusting a live clone of `main`.
