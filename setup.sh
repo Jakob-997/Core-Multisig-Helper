@@ -127,13 +127,13 @@ burn_cds(){
     done
 }
 
-read -rp 'Generate keys or spend? [generate]: ' MODE </dev/tty; MODE=${MODE:-generate}
-[[ $MODE == generate || $MODE == spend ]] || die 'Enter generate or spend.'
+read -rp 'Select mode: generate or spend: ' MODE </dev/tty
+[[ $MODE == generate || $MODE == spend ]] || die 'Enter exactly: generate or spend.'
 [[ ! -e $STATE ]] || { [[ $MODE == generate ]] || die 'Existing Glacier state. If you just generated a wallet, reboot into a fresh Ubuntu Live session before spending; spend mode is intentionally fresh-session only.'; rpc getblockchaininfo >/dev/null 2>&1 && die 'A Glacier wallet is still running. Finish it or reboot before generating another.'; read -rp 'WARNING: A previous Glacier wallet was detected. Type NEW to permanently delete it and create a completely new wallet. Old CDs/backups belong to the old wallet and MUST NOT be mixed with the new one: ' RESET </dev/tty; [[ $RESET == NEW ]] || die 'Canceled.'; rm -rf -- "$STATE"; }
 for c in nft rfkill ip systemctl swapoff sha256sum; do command -v "$c" >/dev/null || die "Missing $c."; done
 
 if [[ $MODE == generate ]]; then
-    read -rp 'Select m-n [default 3-7]: ' MN </dev/tty; MN=${MN:-3-7}
+    read -rp 'Enter multisig policy in m-n format (for example 3-7): ' MN </dev/tty
     MN=${MN//-of-/-}; MN=${MN// of /-}; M=${MN%-*}; N=${MN#*-}
     [[ $M =~ ^[1-9][0-9]*$ && $N =~ ^[1-9][0-9]*$ && $M -le $N && $N -ge 2 && $N -le 20 ]] || die 'Enter m-n, for example 2-5.'
     [[ -b $DRIVE ]] || die "No optical drive: $DRIVE"
