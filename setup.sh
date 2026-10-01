@@ -57,7 +57,7 @@ spend_wallet(){
     echo "Sign the PSBT in Bitcoin Core and save the partially signed PSBT to your transfer USB."
     echo "Then close Core, power off, boot a fresh Ubuntu Live session, and repeat with a different signer disc until $M signers have signed."
     echo "After $M different signers have signed, take the completed transaction online and broadcast it from your node."
-    sudo -u "$gui_user" "$CORE/bin/bitcoin-qt" -datadir="$DATA" -networkactive=0 -listen=0 -wallet=signer
+    sudo -u "$gui_user" "$CORE/bin/bitcoin-qt" -datadir="$DATA" -walletdir="$DATA/wallets" -networkactive=0 -listen=0 -wallet=signer
     echo 'Bitcoin Core closed. Power off before using another signer.'
 }
 
