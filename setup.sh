@@ -40,7 +40,7 @@ install_core(){
 spend_wallet(){
     local src dir desc commas gui_user
     read -rp 'Insert and mount ONE signer backup disc, then press Enter: ' </dev/tty
-    dir=$(findmnt -nr -S "$DRIVE" -o TARGET | head -n1)
+    dir=$(findmnt -nr -S "$DRIVE" -o TARGET 2>/dev/null || true)
     [[ -n $dir ]] || die "Signer disc in $DRIVE is not mounted."
     src=$dir/wallet.dat
     [[ -f $src ]] || die 'Signer backup is missing wallet.dat.'
@@ -54,8 +54,8 @@ spend_wallet(){
     gui_user=${SUDO_USER:-}; [[ -n $gui_user && $gui_user != root ]] || die 'Run Core Multisig Helper with sudo from the Ubuntu desktop user.'
     chown -R "$gui_user:$(id -gn "$gui_user")" "$STATE"
     echo "Wallet policy detected: $M-of-$N multisig. You need $M different signer backups out of $N total."
-    echo "Sign the PSBT in Bitcoin Core and save the partially signed PSBT to your transfer USB."
-    echo "Then close Core, power off, boot a fresh Ubuntu Live session, and repeat with a different signer disc until $M signers have signed."
+    echo 'Bitcoin Core will open with this signer wallet. Use it to verify receive addresses or sign a PSBT.'
+    echo "If signing, save the partially signed PSBT to your transfer USB, then power off and repeat with a different signer until $M signers have signed."
     echo "After $M different signers have signed, take the completed transaction online and broadcast it from your node."
     sudo -H -u "$gui_user" env XDG_RUNTIME_DIR="/run/user/$(id -u "$gui_user")" "$CORE/bin/bitcoin-qt" -datadir="$DATA" -walletdir="$DATA/wallets" -networkactive=0 -listen=0 -wallet=signer
     echo 'Bitcoin Core closed. Power off before using another signer.'
@@ -83,14 +83,14 @@ make_wallet(){
     checksum=$(jq -r .checksum <<<"$account")
     echo "$raw#$checksum" >"$STATE/descriptors.txt"
     node createwallet watch_only true true >/dev/null
-    request=$(jq -cn --arg desc "$raw#$checksum" '[{desc:$desc,active:true,timestamp:"now",range:[0,999]}]')
+    request=$(jq -cn --arg desc "$raw#$checksum" '[{desc:$desc,active:true,timestamp:0,range:[0,999]}]')
     wallet watch_only importdescriptors "$request" | jq -e '.[0].success == true' >/dev/null || die 'Failed to import WATCH ONLY descriptor.'
     [[ $(rpc -rpcwallet=watch_only getwalletinfo | jq -r .private_keys_enabled) == false ]] || die 'WATCH ONLY contains private keys.'
 
     for ((i=1;i<=N;i++)); do
         private="${raw/${xpub[i]}/${xprv[i]}}"
         checksum=$(node getdescriptorinfo "$private" | jq -r .checksum)
-        request=$(jq -cn --arg desc "$private#$checksum" '[{desc:$desc,active:true,timestamp:"now",range:[0,999]}]')
+        request=$(jq -cn --arg desc "$private#$checksum" '[{desc:$desc,active:true,timestamp:0,range:[0,999]}]')
         wallet "signer_$i" importdescriptors "$request" | jq -e '.[0].success == true' >/dev/null || die "Failed to import signer $i descriptor."
     done
 }
@@ -123,7 +123,7 @@ burn_cds(){
         sectors=$(( $(stat -c %s "$iso") / 2048 ))
         cmp "$iso" <(dd if="$DRIVE" bs=2048 count="$sectors" status=none) || die "Signer $i disc verification failed."
         eject "$DRIVE"
-        echo "Signer $i verified. Label and store it separately."
+        echo "Signer $i verified. Store it separately."
     done
 }
 
