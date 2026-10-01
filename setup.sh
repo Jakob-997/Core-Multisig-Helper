@@ -32,53 +32,56 @@ install_core(){
 }
 
 make_wallet(){
-    local n w root account raw private checksum request
+    local i w root account raw private checksum request
     local -a origin xpub xprv
 
-    for n in {1..7}; do
-        w=signer_$n
+    for ((i=1;i<=N;i++)); do
+        w=signer_$i
         node createwallet "$w" false true >/dev/null
         root=$(rpc -rpcwallet="$w" addhdkey | jq -r .xpub)
         account=$(wallet "$w" derivehdkey m/87h/0h/0h "{\"hdkey\":\"$root\",\"private\":true}")
-        origin[n]=$(jq -r .origin <<<"$account")
-        xpub[n]=$(jq -r .xpub <<<"$account")
-        xprv[n]=$(jq -r .xprv <<<"$account")
+        origin[i]=$(jq -r .origin <<<"$account")
+        xpub[i]=$(jq -r .xpub <<<"$account")
+        xprv[i]=$(jq -r .xprv <<<"$account")
     done
 
-    raw='wsh(sortedmulti(3'
-    for n in {1..7}; do raw+=",${origin[n]}${xpub[n]}/<0;1>/*"; done
+    raw="wsh(sortedmulti($M"
+    for ((i=1;i<=N;i++)); do raw+=",${origin[i]}${xpub[i]}/<0;1>/*"; done
     raw+='))'
     checksum=$(node getdescriptorinfo "$raw" | jq -r .checksum)
     echo "$raw#$checksum" >"$STATE/descriptors.txt"
 
-    for n in {1..7}; do
-        private="${raw/${xpub[n]}/${xprv[n]}}"
+    for ((i=1;i<=N;i++)); do
+        private="${raw/${xpub[i]}/${xprv[i]}}"
         checksum=$(node getdescriptorinfo "$private" | jq -r .checksum)
         request="[{\"desc\":\"$private#$checksum\",\"active\":true,\"timestamp\":\"now\",\"range\":[0,999]}]"
-        wallet "signer_$n" importdescriptors "$request" >/dev/null
+        wallet "signer_$i" importdescriptors "$request" >/dev/null
     done
 }
 
 burn_cds(){
-    local n iso sectors
+    local i iso sectors
     mkdir "$STATE/cd"
     cp "$STATE/descriptors.txt" "$STATE/cd/"
-    for n in {1..7}; do
+    for ((i=1;i<=N;i++)); do
         rm -f "$STATE/cd/wallet.dat"
-        rpc -rpcwallet="signer_$n" backupwallet "$STATE/cd/wallet.dat"
-        iso=$STATE/signer_$n.iso
+        rpc -rpcwallet="signer_$i" backupwallet "$STATE/cd/wallet.dat"
+        iso=$STATE/signer_$i.iso
         xorriso -as mkisofs -quiet -R -J -o "$iso" "$STATE/cd"
-        read -rp "Insert blank CD-R for signer $n, then press Enter: " </dev/tty
+        read -rp "Insert blank CD-R for signer $i, then press Enter: " </dev/tty
         xorriso -as cdrecord -v dev="$DRIVE" -dao "$iso"
         eject "$DRIVE"
-        read -rp "Reinsert signer $n, then press Enter: " </dev/tty
+        read -rp "Reinsert signer $i, then press Enter: " </dev/tty
         sectors=$(( $(stat -c %s "$iso") / 2048 ))
         cmp "$iso" <(dd if="$DRIVE" bs=2048 count="$sectors" status=none)
         eject "$DRIVE"
-        echo "Signer $n verified. Label and store it separately."
+        echo "Signer $i verified. Label and store it separately."
     done
 }
 
+read -rp 'm [3]: ' M </dev/tty; M=${M:-3}
+read -rp 'n [7]: ' N </dev/tty; N=${N:-7}
+[[ $M =~ ^[1-9][0-9]*$ && $N =~ ^[1-9][0-9]*$ && $M -le $N && $N -le 20 ]] || die 'Require 1 <= m <= n <= 20.'
 [[ ! -e $STATE ]] || die 'Existing Glacier wallet.'
 [[ -b $DRIVE ]] || die "No optical drive: $DRIVE"
 command -v nft rfkill xorriso eject jq >/dev/null || die 'Install prerequisites first.'
