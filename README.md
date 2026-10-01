@@ -54,7 +54,7 @@ Choose `generate` when creating a wallet for the first time, or `spend` when sig
 
 ## Generating a wallet
 
-Generation requires `jq`, `nftables`, `rfkill`, `iproute2`, `xorriso`, and `eject` to be available in the live Ubuntu session.
+Glacier includes the official Ubuntu 26.04 xorriso packages and installs them locally in generate mode. No Internet connection is needed.
 
 Connect the optical writer and have one blank disc ready for each signer.
 
