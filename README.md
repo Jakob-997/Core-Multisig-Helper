@@ -11,14 +11,17 @@ The repository contains only:
 - this README
 - the frozen Bitcoin Core binary
 
-The script:
+The script first asks whether you are generating keys or spending.
 
+In generate mode it:
 1. asks for your m-of-n policy;
-2. airgaps the running system by blocking all non-loopback network traffic and radios;
-3. extracts and starts the bundled Bitcoin Core with networking disabled;
+2. airgaps the running system;
+3. extracts and starts the bundled Bitcoin Core;
 4. creates `n` independent BIP87 signer wallets;
 5. builds one `wsh(sortedmulti(m,...))` multipath descriptor;
 6. burns one signer to each of `n` CD-Rs and verifies each disc byte-for-byte.
+
+In spend mode it only airgaps the system and makes the bundled Bitcoin Core available.
 
 ## Setup
 
@@ -45,6 +48,14 @@ sudo ./setup.sh
 ```
 
 At startup:
+
+```text
+Generate keys or spend? [generate]:
+```
+
+Choose `generate` for first-time wallet creation or `spend` for a signing session.
+
+In generate mode Glacier then asks:
 
 ```text
 Select m-n [default 3-7]:
