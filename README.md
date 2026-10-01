@@ -27,10 +27,18 @@ Use a clean x86-64 Ubuntu 24.04/26.04 installation.
 Before running Glacier, while still online, make sure these packages are installed:
 `git`, `jq`, `nftables`, `rfkill`, `xorriso`, and `eject`.
 
-Clone or copy this repository onto the machine, connect the optical writer at
-`/dev/sr0`, have one blank CD-R per signer ready, and physically unplug Ethernet.
+For real use, download a specific Glacier release and verify it before running it.
 
-Then there is one Glacier command:
+For testing, you can clone the current repository:
+
+```bash
+git clone --depth 1 https://github.com/Jakob-997/Glacier-2.git && cd Glacier-2
+```
+
+Connect the optical writer at `/dev/sr0`, have one blank CD-R per signer ready,
+and physically unplug Ethernet.
+
+Then run Glacier:
 
 ```bash
 sudo ./setup.sh
