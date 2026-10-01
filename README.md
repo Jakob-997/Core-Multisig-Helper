@@ -179,15 +179,13 @@ Boot a **fresh Ubuntu Live session** and insert USB 2 containing Core Multisig H
 sudo bash setup.sh
 ```
 
-Choose `spend`, then insert the signer CD when prompted.
-
 Choose:
 
 ```text
 spend
 ```
 
-The script airgaps the machine, then asks for **one signer disc**. It copies that wallet into RAM, reads the M-of-N policy from the descriptor, and launches Bitcoin Core.
+The script airgaps the machine, then asks you to insert and mount **one signer disc**. It copies that wallet into RAM, reads the M-of-N policy from the descriptor, and launches Bitcoin Core.
 
 In Core:
 
