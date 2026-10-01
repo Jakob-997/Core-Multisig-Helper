@@ -81,9 +81,9 @@ burn_cds(){
     done
 }
 
-read -rp 'm [3]: ' M </dev/tty; M=${M:-3}
-read -rp 'n [7]: ' N </dev/tty; N=${N:-7}
-[[ $M =~ ^[1-9][0-9]*$ && $N =~ ^[1-9][0-9]*$ && $M -le $N && $N -ge 2 && $N -le 20 ]] || die 'Require 1 <= m <= n and 2 <= n <= 20.'
+read -rp 'Select m-of-n [3-of-7]: ' MN </dev/tty; MN=${MN:-3-7}
+MN=${MN// of /-}; M=${MN%-*}; N=${MN#*-}
+[[ $M =~ ^[1-9][0-9]*$ && $N =~ ^[1-9][0-9]*$ && $M -le $N && $N -ge 2 && $N -le 20 ]] || die 'Enter m-n, for example 2-5.'
 [[ ! -e $STATE ]] || die 'Existing Glacier wallet.'
 [[ -b $DRIVE ]] || die "No optical drive: $DRIVE"
 command -v nft rfkill xorriso eject jq >/dev/null || die 'Install prerequisites first.'
