@@ -11,17 +11,30 @@ follow.
 
 ## Architecture
 
-Glacier-2 is a modular Bash/Python wrapper around Bitcoin Core.
+Glacier-2 deliberately keeps the execution path shallow. `setup.sh` contains the
+complete ordered setup procedure as five plainly named stages:
+
+1. `install_core`
+2. `airgap`
+3. `wallets`
+4. `desktop_identity`
+5. `backup_cd`
+
+There is no module loader and no per-stage wrapper file. A reviewer can follow the
+privileged setup path from top to bottom in one script.
 
 | File | Responsibility |
 | --- | --- |
-| `setup.sh`, `lib/options.sh` | preflight, option routing, exclusive lock, ordered modules, completion records, cleanup |
-| `lib/common.sh` | logging, dedicated Core lifecycle, RPC helpers |
-| `modules/install_core.sh` | dependencies, Core download, signature/checksum verification, isolated install |
-| `modules/airgap.sh` | firewall, radio/service/driver restrictions, interface unbinding, persistent boot enforcement |
-| `modules/wallets.sh`, `lib/wallets.py` | signer creation, BIP87 account derivation, multisig descriptors, watch-only wallet, validation |
-| `modules/desktop_identity.sh`, `lib/desktop_identity.py` | recognition wallpaper/code, GNOME integration, desktop Core datadir |
-| `modules/backup_cd.sh` | one signer per CD-R, ISO creation, burn, physical reinsertion and byte/hash readback |
+| `setup.sh` | preflight, Core lifecycle, verified install, airgap, stage ordering, desktop handoff, CD backup, cleanup |
+| `lib/wallets.py` | 3-of-7 BIP87 signer/watch-wallet construction and validation |
+| `lib/desktop_identity.py` | recognition wallpaper/code and GNOME watch-wallet integration |
+| `lib/enforce-airgap.sh` | boot/runtime enforcement and verification of the installed airgap |
+| `lib/verify_signatures.py` | strict checking of the two pinned Bitcoin Core release signatures |
+| `lib/launch-qt.sh` | tiny unprivileged launcher for the offline Bitcoin-Qt desktop copy |
+
+The separate helpers remain only where they have an independent runtime or a
+security-sensitive unit-test boundary. Declarative nftables and systemd files remain
+under `config/` rather than being hidden inside shell strings.
 
 Bitcoin Core is installed under:
 
