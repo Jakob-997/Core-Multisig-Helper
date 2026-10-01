@@ -10,7 +10,7 @@ DATA=$STATE/data
 DRIVE=/dev/sr0
 
 die(){ echo "ERROR: $*" >&2; exit 1; }
-(( EUID == 0 )) || die 'Run Core Multisig Helper with sudo: sudo bash setup.sh'
+(( EUID == 0 )) || die 'Run Core Multisig Helper with sudo: sudo bash ./setup.sh'
 rpc(){ "$CORE/bin/bitcoin-cli" -datadir="$DATA" -rpcport=18459 "$@"; }
 node(){ local m=$1; shift; printf '%s\n' "$@" | rpc -stdin "$m"; }
 wallet(){ local w=$1 m=$2; shift 2; printf '%s\n' "$@" | rpc -rpcwallet="$w" -stdin "$m"; }
