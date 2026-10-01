@@ -55,7 +55,7 @@ Choose `generate` when creating a wallet for the first time, or `spend` when sig
 
 ## Generating a wallet
 
-Glacier includes the official Ubuntu 26.04 xorriso packages and installs them locally in generate mode. No Internet connection is needed.
+Ubuntu 26.04.1 Desktop Live already includes the tools Glacier needs for generation, including xorriso. Glacier does not install or download packages.
 
 Connect the optical writer and have one blank disc for the WATCH ONLY wallet plus one blank disc for each signer. A 3-7 wallet therefore needs 8 discs.
 
