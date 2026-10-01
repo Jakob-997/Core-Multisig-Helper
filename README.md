@@ -33,7 +33,7 @@ Versioned releases are planned soon so an auditor can review a specific immutabl
 
 This project is open-source public utility software. Independent review is welcome. If you are qualified and would like to help audit it, please get in touch. If additional motivation is needed, a community audit bounty can be raised, and anyone is free to organize fundraising to support an independent audit. The project is intentionally small, so a focused audit should be relatively limited in scope.
 
-### Bitcoin Core reference implementation
+### Reference material
 
 This project used Bitcoin Core [issue #35645 — Multisig Wizard tracking issue](https://github.com/bitcoin/bitcoin/issues/35645), [PR #36325 — Contrib: add multisig wizard](https://github.com/bitcoin/bitcoin/pull/36325), and its [`contrib/multisig/wizard.py`](https://github.com/bitcoin/bitcoin/blob/2803e1518bb22394a80bac94e2435bb3982d0cde/contrib/multisig/wizard.py) implementation as important references for the multisig construction and Bitcoin Core RPC flow.
 
