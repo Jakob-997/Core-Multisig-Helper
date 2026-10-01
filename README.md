@@ -2,71 +2,71 @@
 
 Minimal 3-of-7 Bitcoin cold storage.
 
-Glacier-2 does four things:
+The repository contains only the setup script, this README, and the frozen Bitcoin
+Core binary. The script:
 
-1. installs the frozen Bitcoin Core build in this repository;
-2. disables networking;
-3. creates seven signer wallets for one 3-of-7 descriptor policy;
-4. burns and verifies one signer per CD-R.
+1. blocks non-loopback network traffic and radios;
+2. extracts the bundled Bitcoin Core;
+3. creates seven independent BIP87 signer wallets for one 3-of-7
+   `wsh(sortedmulti(...))` multipath descriptor;
+4. burns one signer to each of seven CD-Rs and verifies each disc byte-for-byte.
 
-> Experimental. Complete a recovery test before using meaningful funds.
+## Setup
 
-## Requirements
-
-- x86-64 PC
-- clean Ubuntu 24.04 or 26.04 install
-- CD/DVD writer
-- seven blank CD-Rs
-
-Physically unplug Ethernet and disable/remove radios where practical.
-
-## Run
+Use a clean x86-64 Ubuntu 24.04/26.04 installation. Before going offline:
 
 ```bash
 sudo apt update
-sudo apt install -y git
+sudo apt install -y git jq nftables rfkill xorriso eject
 git clone --depth 1 https://github.com/Jakob-997/Glacier-2.git
 cd Glacier-2
+```
+
+Connect the optical writer and have seven blank CD-Rs ready. Physically unplug
+Ethernet. Then run:
+
+```bash
 sudo ./setup.sh
 ```
 
-After the airgap is applied, never reconnect the machine.
+The script applies the software airgap before extracting or running Bitcoin Core.
+Do not reconnect the machine.
 
-If your optical drive is not `/dev/sr0`:
+If the writer is not `/dev/sr0`:
 
 ```bash
 sudo env GLACIER_DRIVE=/dev/sr1 ./setup.sh
 ```
 
-## Each CD contains
+Each disc contains only `wallet.dat` and `descriptors.txt`. Label the discs
+Signer 1 through Signer 7 and store them separately. Any three different signer
+wallets can satisfy the policy.
 
-```text
-wallet.dat
-descriptors.txt
-RECOVERY.md
-DISC.txt
-SHA256SUMS
-```
+## Recovery
 
-`wallet.dat` is private and unencrypted. Store the seven discs separately.
+On a fresh offline Bitcoin Core 32.0rc2 installation, restore any three
+`wallet.dat` files with unique wallet names. Create a blank watch-only wallet and
+import the single multipath descriptor from `descriptors.txt`; Core expands
+`<0;1>` into receive and change branches. Glacier initially imports indices
+0-999.
 
-Any three different signer wallets can satisfy the policy.
+Create a PSBT with the watch-only wallet, process it independently with three
+restored signers, combine the PSBTs, and finalize. Prove this with disposable funds
+before using meaningful money.
 
-## Trust model
+If setup fails after keys exist, preserve `/var/lib/glacier2`. Do not delete it
+and rerun setup merely to obtain a clean run.
 
-Bitcoin Core 32.0rc2 for x86-64 Linux is frozen in:
+## Bitcoin Core
 
-```text
-vendor/bitcoin-32.0rc2-x86_64-linux-gnu.tar.gz
-```
+`bitcoin-core.tar.gz` is the official Bitcoin Core 32.0rc2 x86-64 Linux archive.
+Trusting a reviewed Glacier commit includes trusting this binary.
 
-Trusting a reviewed Glacier commit includes trusting that binary. Its upstream
-SHA256 is:
+Upstream SHA256:
 
 ```text
 0255103718033e6aee15fa944717fc277e047b845bff1e7408af0ea732d8d0c1
 ```
 
-The production code is just `setup.sh` and `wallets.py`.
-
-See [RECOVERY.md](RECOVERY.md) before using the wallet.
+Glacier is experimental. Physically isolating the signing computer remains stronger
+than software isolation.
