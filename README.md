@@ -39,6 +39,8 @@ This project used Bitcoin Core [PR #36325 — Contrib: add multisig wizard](http
 
 The upstream wizard uses the same BIP 87 account path and `wsh(sortedmulti(...))` multipath descriptor construction used here. If and when that work is officially merged into Bitcoin Core, a future version of Core Multisig Helper can consider directly adapting the upstream implementation instead of maintaining duplicate wallet-construction logic.
 
+You can also help by reviewing, testing, and helping move the upstream Python multisig wizard and broader Bitcoin Core multisig GUI work toward merge. Ideally, this helper would eventually become unnecessary because the same workflow would live directly in Bitcoin Core, where it could benefit from the review process, testing, maintenance, and trust model of the Bitcoin Core repository itself.
+
 ## Security design
 
 The goal is a small, understandable process built around Bitcoin Core rather than a new wallet stack.
