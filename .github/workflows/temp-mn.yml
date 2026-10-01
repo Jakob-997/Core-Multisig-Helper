@@ -1,0 +1,31 @@
+name: Temporary m-of-n validation
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y shellcheck jq
+      - run: shellcheck setup.sh && bash -n setup.sh
+      - name: Validate 2-of-3 with bundled Core
+        run: |
+          set -euo pipefail
+          mkdir /tmp/core /tmp/data /tmp/state
+          tar -xzf bitcoin-core.tar.gz --strip-components=1 -C /tmp/core
+          sed '/^read -rp.*m \[3\]/,$d' setup.sh >/tmp/functions.sh
+          source /tmp/functions.sh
+          CORE=/tmp/core
+          DATA=/tmp/data
+          STATE=/tmp/state
+          M=2
+          N=3
+          /tmp/core/bin/bitcoind -datadir=/tmp/data -daemonwait -networkactive=0 -listen=0 -rpcport=18459
+          trap '/tmp/core/bin/bitcoin-cli -datadir=/tmp/data -rpcport=18459 stop || true' EXIT
+          make_wallet
+          test "$(/tmp/core/bin/bitcoin-cli -datadir=/tmp/data -rpcport=18459 listwallets | jq 'length')" -eq 3
+          d=$(cat /tmp/state/descriptors.txt)
+          [[ "$d" == wsh\(sortedmulti\(2,*"<0;1>"* ]]
+          for i in 1 2 3; do
+            /tmp/core/bin/bitcoin-cli -datadir=/tmp/data -rpcport=18459 -rpcwallet=signer_$i listdescriptors false |
+              jq -e '[.descriptors[] | select(.active)] | length == 2' >/dev/null
+          done
