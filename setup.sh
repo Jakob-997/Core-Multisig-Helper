@@ -67,6 +67,9 @@ make_wallet(){
     [[ $(jq '.multipath_expansion|length' <<<"$account") == 2 ]] || die 'Bad descriptor.'
     checksum=$(jq -r .checksum <<<"$account")
     echo "$raw#$checksum" >"$STATE/descriptors.txt"
+    node createwallet watch_only true true >/dev/null
+    request="[{"desc":"$raw#$checksum","active":true,"timestamp":"now","range":[0,999]}]"
+    wallet watch_only importdescriptors "$request" >/dev/null
 
     for ((i=1;i<=N;i++)); do
         private="${raw/${xpub[i]}/${xprv[i]}}"
@@ -80,6 +83,18 @@ burn_cds(){
     local i iso sectors
     mkdir "$STATE/cd"
     cp "$STATE/descriptors.txt" "$STATE/cd/"
+    rpc -rpcwallet=watch_only backupwallet "$STATE/cd/watch_only.dat"
+    iso=$STATE/watch_only.iso
+    xorriso -as mkisofs -quiet -R -J -o "$iso" "$STATE/cd"
+    read -rp "Insert blank CD-R for WATCH ONLY, then press Enter: " </dev/tty
+    xorriso -as cdrecord -v dev="$DRIVE" -dao "$iso"
+    eject "$DRIVE"
+    read -rp "Reinsert WATCH ONLY, then press Enter: " </dev/tty
+    sectors=$(( $(stat -c %s "$iso") / 2048 ))
+    cmp "$iso" <(dd if="$DRIVE" bs=2048 count="$sectors" status=none)
+    eject "$DRIVE"
+    echo "WATCH ONLY verified. Use this disc on the online computer."
+    rm "$STATE/cd/watch_only.dat"
     for ((i=1;i<=N;i++)); do
         rm -f "$STATE/cd/wallet.dat"
         rpc -rpcwallet="signer_$i" backupwallet "$STATE/cd/wallet.dat"
