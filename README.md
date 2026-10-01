@@ -16,8 +16,9 @@ Glacier:
 2. asks for your multisig policy, with `3-7` as the default;
 3. generates the independent Bitcoin Core signer wallets;
 4. builds the multisig descriptor;
-5. burns one signer backup to each disc;
-6. verifies every disc after it is written.
+5. burns one public WATCH ONLY disc for the online computer;
+6. burns one private signer backup to each signer disc;
+7. verifies every disc after it is written.
 
 For example, `3-7` means any 3 of the 7 signer backups are required to spend.
 
@@ -70,9 +71,13 @@ Glacier generates the wallet, burns each signer backup, verifies each disc, and 
 
 There is no seed phrase or private key to transcribe by hand.
 
+## Watch-only disc
+
+Glacier first burns a separate WATCH ONLY disc for the online computer. It contains only the public multisig descriptor and a Bitcoin Core watch-only wallet. It contains no private keys.
+
 ## Each signer disc
 
-Each signer disc contains:
+Each private signer disc contains:
 
 ```text
 wallet.dat
