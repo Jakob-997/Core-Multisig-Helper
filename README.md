@@ -55,6 +55,16 @@ The goal is a small, understandable process built around Bitcoin Core rather tha
 
 During initial generation, all N signer keys coexist on the one offline generation machine.
 
+### Tradeoffs and future direction
+
+This is not intended to be the final or only way to build secure Bitcoin custody. There are approaches with attractive tradeoffs that may ultimately be preferable for some users.
+
+For a more **checking-account-like** setup, threshold secret-sharing approaches such as Shamir/SLIP-39 may offer a cleaner backup model than maintaining multiple independent signer wallets. The reason this project uses Bitcoin Core multisig today is practical: it is working now, the helper code is extremely small, and the security-critical logic stays close to Bitcoin Core. I would rather wait for newer alternatives and surrounding tooling to receive more review before depending on them for meaningful funds.
+
+For deeper **cold-storage** setups, timelock-based designs such as Liana are also compelling, especially when combined with a carefully chosen cosigner or recovery path. That is a different and less conventional model, and deserves its own guides, threat model, and review rather than being bolted onto this project.
+
+The working idea is therefore: use this as a simple, low-code solution available today, while better backup and recovery designs continue to be reviewed and documented. Ideally, over time there should be clear guides for both a simple threshold-backup “checking account” model and a stronger timelocked cold-storage model.
+
 ### Physical airgap strongly recommended
 
 The script creates a software airgap, but malware or a sufficiently serious system compromise could theoretically defeat software controls.
