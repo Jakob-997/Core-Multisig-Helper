@@ -1,0 +1,78 @@
+name: Temporary final hardware-draft regression
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static checks
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y shellcheck jq
+          bash -n setup.sh
+          shellcheck setup.sh
+          test "$(findmnt -n -o FSTYPE /dev/shm)" = tmpfs
+          echo '0255103718033e6aee15fa944717fc277e047b845bff1e7408af0ea732d8d0c1  bitcoin-core.tar.gz' | sha256sum -c -
+      - name: Generate sign restore regression
+        run: |
+          set -Eeuo pipefail
+          D=/tmp/cmh
+          C=$D/core
+          DATA=$D/data
+          mkdir -p "$C" "$DATA"
+          tar -xzf bitcoin-core.tar.gz --strip-components=1 -C "$C"
+          "$C/bin/bitcoind" -regtest -datadir="$DATA" -daemonwait -networkactive=0 -listen=0 -fallbackfee=0.0002 -rpcport=18459
+          rpc(){ "$C/bin/bitcoin-cli" -regtest -datadir="$DATA" -rpcport=18459 "$@"; }
+          node(){ local m=$1; shift; printf '%s\n' "$@" | rpc -stdin "$m"; }
+          wallet(){ local w=$1 m=$2; shift 2; printf '%s\n' "$@" | rpc -rpcwallet="$w" -stdin "$m"; }
+          trap 'rpc stop >/dev/null 2>&1 || true' EXIT
+          declare -a origin xpub xprv
+          for i in 1 2 3; do
+            w=signer_$i
+            node createwallet "$w" false true >/dev/null
+            root=$(rpc -rpcwallet="$w" addhdkey | jq -r .xpub)
+            account=$(wallet "$w" derivehdkey m/87h/0h/0h "{\"hdkey\":\"$root\",\"private\":true}")
+            origin[i]=$(jq -r .origin <<<"$account")
+            xpub[i]=$(jq -r .xpub <<<"$account")
+            xprv[i]=$(jq -r .xprv <<<"$account")
+          done
+          raw="wsh(sortedmulti(2"
+          for i in 1 2 3; do raw+=",${origin[i]}${xpub[i]}/<0;1>/*"; done
+          raw+='))'
+          info=$(node getdescriptorinfo "$raw")
+          test "$(jq '.multipath_expansion|length' <<<"$info")" = 2
+          checksum=$(jq -r .checksum <<<"$info")
+          public="$raw#$checksum"
+          node createwallet watch_only true true >/dev/null
+          request=$(jq -cn --arg desc "$public" '[{desc:$desc,active:true,timestamp:"now",range:[0,999]}]')
+          wallet watch_only importdescriptors "$request" | jq -e '.[0].success == true'
+          rpc -rpcwallet=watch_only getwalletinfo | jq -e '.private_keys_enabled == false'
+          for i in 1 2 3; do
+            private="${raw/${xpub[i]}/${xprv[i]}}"
+            checksum=$(node getdescriptorinfo "$private" | jq -r .checksum)
+            request=$(jq -cn --arg desc "$private#$checksum" '[{desc:$desc,active:true,timestamp:"now",range:[0,999]}]')
+            wallet "signer_$i" importdescriptors "$request" | jq -e '.[0].success == true'
+          done
+          addr=$(rpc -rpcwallet=watch_only getnewaddress)
+          test "$addr" = "$(rpc -rpcwallet=signer_1 getnewaddress)"
+          mine=$(rpc -rpcwallet=watch_only getnewaddress)
+          rpc generatetoaddress 101 "$mine" >/dev/null
+          dest=$(rpc -rpcwallet=signer_3 getnewaddress)
+          psbt=$(rpc -rpcwallet=watch_only -named walletcreatefundedpsbt inputs='[]' outputs="{\"$dest\":1}" | jq -r .psbt)
+          p1=$(rpc -rpcwallet=signer_1 walletprocesspsbt "$psbt" | jq -r .psbt)
+          p2=$(rpc -rpcwallet=signer_2 walletprocesspsbt "$psbt" | jq -r .psbt)
+          combined=$(rpc combinepsbt "[\"$p1\",\"$p2\"]")
+          rpc finalizepsbt "$combined" | jq -e '.complete == true'
+          rpc -rpcwallet=watch_only backupwallet "$D/watch_only.dat"
+          rpc -rpcwallet=signer_1 backupwallet "$D/signer.dat"
+          rpc unloadwallet watch_only >/dev/null
+          rpc unloadwallet signer_1 >/dev/null
+          rpc restorewallet restored_watch "$D/watch_only.dat" | jq -e '.name == "restored_watch"'
+          rpc -rpcwallet=restored_watch getwalletinfo | jq -e '.private_keys_enabled == false'
+          rpc restorewallet restored_signer "$D/signer.dat" | jq -e '.name == "restored_signer"'
+          rpc -rpcwallet=restored_signer getwalletinfo | jq -e '.private_keys_enabled == true'
+          desc="$public"
+          [[ $desc =~ sortedmulti\(([0-9]+), ]]
+          M=${BASH_REMATCH[1]}; commas=${desc//[^,]/}; N=${#commas}
+          test "$M" = 2
+          test "$N" = 3
