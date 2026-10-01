@@ -52,26 +52,26 @@ make_wallet(){
         call "" createwallet "$wallet" false true >/dev/null
         root=$(call "$wallet" addhdkey | jq -r .xpub)
         account=$(call "$wallet" derivehdkey "$path" "{\"hdkey\":\"$root\"}")
-        roots[$n]=$root
-        origins[$n]=$(jq -r .origin <<<"$account")
-        xpubs[$n]=$(jq -r .xpub <<<"$account")
+        roots[n]=$root
+        origins[n]=$(jq -r .origin <<<"$account")
+        xpubs[n]=$(jq -r .xpub <<<"$account")
     done
 
     for b in 0 1; do
-        raw[$b]='wsh(sortedmulti(3'
-        for n in {1..7}; do raw[$b]+=",${origins[$n]}${xpubs[$n]}/$b/*"; done
-        raw[$b]+='))'
-        checksum=$(call "" getdescriptorinfo "${raw[$b]}" | jq -r .checksum)
-        public[$b]="${raw[$b]}#$checksum"
+        raw[b]='wsh(sortedmulti(3'
+        for n in {1..7}; do raw[b]+=",${origins[n]}${xpubs[n]}/$b/*"; done
+        raw[b]+='))'
+        checksum=$(call "" getdescriptorinfo "${raw[b]}" | jq -r .checksum)
+        public[b]="${raw[b]}#$checksum"
     done
     printf '%s\n%s\n' "${public[0]}" "${public[1]}" >"$STATE/descriptors.txt"
 
     for n in {1..7}; do
         wallet=signer_$n
-        account=$(call "$wallet" derivehdkey "$path" "{\"hdkey\":\"${roots[$n]}\",\"private\":true}")
+        account=$(call "$wallet" derivehdkey "$path" "{\"hdkey\":\"${roots[n]}\",\"private\":true}")
         private=$(jq -r .xprv <<<"$account")
         for b in 0 1; do
-            account="${raw[$b]/${xpubs[$n]}/$private}"
+            account="${raw[b]/${xpubs[n]}/$private}"
             checksum=$(call "" getdescriptorinfo "$account" | jq -r .checksum)
             [[ $b == 0 ]] && receive="$account#$checksum" || change="$account#$checksum"
         done
