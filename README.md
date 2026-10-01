@@ -152,7 +152,7 @@ Insert USB 2, connect the optical writer, and have the pre-labeled discs ready.
 Open a terminal, navigate to the Core Multisig Helper project directory, then run:
 
 ```bash
-sudo bash setup.sh
+sudo bash ./setup.sh
 ```
 
 Choose:
@@ -222,7 +222,7 @@ Create the PSBT online and save it to **USB 2**.
 Boot a **fresh Ubuntu Live session** and insert USB 2 containing Core Multisig Helper and the PSBT. Navigate to the Core Multisig Helper project directory and run:
 
 ```bash
-sudo bash setup.sh
+sudo bash ./setup.sh
 ```
 
 Choose:
@@ -267,7 +267,7 @@ The script verifies this before starting Core.
 For development testing:
 
 ```bash
-sudo apt install -y git && git clone --depth 1 https://github.com/Jakob-997/Core-Multisig-Helper.git && cd Core-Multisig-Helper && sudo bash setup.sh
+sudo apt install -y git && git clone --depth 1 https://github.com/Jakob-997/Core-Multisig-Helper.git && cd Core-Multisig-Helper && sudo bash ./setup.sh
 ```
 
 Do not use a live clone of `main` for real funds. Use verified release artifacts.
