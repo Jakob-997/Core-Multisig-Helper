@@ -35,7 +35,7 @@ This project is open-source public utility software. Independent review is welco
 
 ### Bitcoin Core reference implementation
 
-This project used Bitcoin Core [PR #36325 — Contrib: add multisig wizard](https://github.com/bitcoin/bitcoin/pull/36325) and its [`contrib/multisig/wizard.py`](https://github.com/bitcoin/bitcoin/blob/2803e1518bb22394a80bac94e2435bb3982d0cde/contrib/multisig/wizard.py) implementation as important references for the multisig construction and Bitcoin Core RPC flow.
+This project used Bitcoin Core [issue #35645 — Multisig Wizard tracking issue](https://github.com/bitcoin/bitcoin/issues/35645), [PR #36325 — Contrib: add multisig wizard](https://github.com/bitcoin/bitcoin/pull/36325), and its [`contrib/multisig/wizard.py`](https://github.com/bitcoin/bitcoin/blob/2803e1518bb22394a80bac94e2435bb3982d0cde/contrib/multisig/wizard.py) implementation as important references for the multisig construction and Bitcoin Core RPC flow.
 
 The upstream wizard uses the same BIP 87 account path and `wsh(sortedmulti(...))` multipath descriptor construction used here. If and when that work is officially merged into Bitcoin Core, a future version of Core Multisig Helper can consider directly adapting the upstream implementation instead of maintaining duplicate wallet-construction logic.
 
