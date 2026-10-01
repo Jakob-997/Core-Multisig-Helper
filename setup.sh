@@ -216,6 +216,7 @@ main() {
     [[ $EUID == 0 ]] || die 'Run with sudo on a clean Ubuntu installation.'
     [[ -z ${SSH_CONNECTION:-}${SSH_TTY:-} ]] || die 'Do not run over SSH.'
     [[ -d /run/systemd/system ]] || die 'A booted systemd system is required.'
+    # shellcheck source=/dev/null
     source /etc/os-release
     [[ $ID == ubuntu && ( $VERSION_ID == 24.04 || $VERSION_ID == 26.04 ) ]] || die 'Ubuntu 24.04 or 26.04 is required.'
 
