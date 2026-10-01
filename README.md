@@ -171,7 +171,7 @@ Treat the **online computer as untrusted**. Its job is to monitor the wallet, co
 
 Whichever online wallet you use, follow these rules:
 
-- **Never trust an online-generated receive address by itself.** Before sending funds, verify that exact address independently on a fresh offline Ubuntu session using one of your signer discs, or an authentic offline copy of your WATCH ONLY wallet/descriptor.
+- **Never trust an online-generated receive address by itself.** To receive funds, boot a fresh offline Ubuntu session, run `spend` from one of your signer CDs, and use or verify the address shown by that offline signer.
 - **Before signing a spend, verify the destination, amount, fee and every change output on the offline signer.** Confirm that each change output belongs to your multisig wallet.
 - Assume the online computer may be lying to you. **Only trust addresses derived and displayed by the fresh live-booted offline laptop with one of your authentic Core Multisig Helper discs loaded.** Do not treat an address shown only by the online wallet as authoritative.
 
@@ -212,7 +212,7 @@ Then return USB 2 to the online computer and broadcast the completed transaction
 
 ## Bitcoin Core
 
-The repository currently includes frozen Bitcoin Core **32.0rc2 x86-64 Linux**.
+The repository currently includes frozen Bitcoin Core **32.0rc2 x86-64 Linux**, a release-candidate build.
 
 SHA256:
 
