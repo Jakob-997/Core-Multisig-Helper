@@ -25,11 +25,10 @@ privileged setup path from top to bottom in one script.
 
 | File | Responsibility |
 | --- | --- |
-| `setup.sh` | preflight, Core lifecycle, verified install, airgap, stage ordering, desktop handoff, CD backup, cleanup |
+| `setup.sh` | preflight, bundled Core install/lifecycle, airgap, stage ordering, desktop handoff, CD backup, cleanup |
 | `lib/wallets.py` | 3-of-7 BIP87 signer/watch-wallet construction and validation |
 | `lib/desktop_identity.py` | recognition wallpaper/code and GNOME watch-wallet integration |
 | `lib/enforce-airgap.sh` | boot/runtime enforcement and verification of the installed airgap |
-| `lib/verify_signatures.py` | strict checking of the two pinned Bitcoin Core release signatures |
 | `lib/launch-qt.sh` | tiny unprivileged launcher for the offline Bitcoin-Qt desktop copy |
 
 The separate helpers remain only where they have an independent runtime or a
@@ -186,27 +185,26 @@ The normal watch-only desktop wallet can derive addresses but cannot sign. Becau
 the signing computer stays offline, it is not a synchronized balance-monitoring
 wallet.
 
-## Bitcoin Core verification
+## Bundled Bitcoin Core trust model
 
-The installer currently targets Bitcoin Core **32.0rc2**.
+Glacier-2 currently freezes Bitcoin Core **32.0rc2** inside the repository under
+`vendor/`. The setup program does not download Core, fetch signing keys, or repeat
+upstream GPG verification.
 
-It downloads the archive, `SHA256SUMS`, and `SHA256SUMS.asc` from the official
-Bitcoin Core distribution location.
+The trust boundary is therefore the reviewed Glacier-2 revision itself: trusting a
+specific Glacier commit means trusting the Bitcoin Core archive committed in that
+same revision.
 
-The installer requires valid SHA256-or-stronger signatures from both pinned primary
-fingerprints:
+Before a Core archive is added or replaced, the maintainer verifies it against the
+official Bitcoin Core release material and reproducible-build attestations. The
+expected upstream SHA256 values are retained in `vendor/SHA256SUMS` so reviewers
+can independently compare the committed artifacts whenever they choose.
 
-- Hennadii Stepanov / hebasto:
-  `D1DBF2C4B96F2DEBF4C16654410108112E7EA81F`
-- Ava Chow / achow101:
-  `152812300785C96444D3334D17565732E08E5E41`
-
-Builder keys are fetched from the official `bitcoin-core/guix.sigs` repository,
-their full fingerprints are checked, and the selected archive hash is verified
-before extraction.
-
-This is signature/checksum verification. It is **not** an independent reproducible
-build of Bitcoin Core.
+The runtime installer only extracts the bundled archive and confirms that the
+resulting `bitcoind` reports the frozen expected version. An attacker able to
+replace an entire trusted Glacier revision could replace both code and hashes, so
+repeating a hash stored beside the archive would not create an independent trust
+root.
 
 ## Airgap behavior
 
