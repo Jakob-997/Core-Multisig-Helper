@@ -106,4 +106,15 @@ Upstream SHA256:
 0255103718033e6aee15fa944717fc277e047b845bff1e7408af0ea732d8d0c1
 ```
 
+
+## Testing only
+
+For quick testing, you can install Git, clone the current `main` branch, and run Glacier with:
+
+```bash
+sudo apt install -y git && git clone --depth 1 https://github.com/Jakob-997/Glacier-2.git && cd Glacier-2 && sudo ./setup.sh
+```
+
+**Do not use this shortcut for real funds.** For an actual Glacier setup, independently verify the Ubuntu ISO and the Glacier-2 release/artifacts before moving them onto the live computer.
+
 Glacier-2 is experimental. Test the complete generation and spending process with disposable funds before using meaningful money.
