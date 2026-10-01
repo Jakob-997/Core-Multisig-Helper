@@ -39,7 +39,7 @@ install_core(){
 
 spend_wallet(){
     local src dir desc commas gui_user
-    read -rp 'Insert and mount ONE signer backup disc, then press Enter: ' </dev/tty
+    read -rp 'Ensure ONE signer backup disc is inserted and mounted, then press Enter: ' </dev/tty
     dir=$(findmnt -nr -S "$DRIVE" -o TARGET 2>/dev/null || true)
     [[ -n $dir ]] || die "Signer disc in $DRIVE is not mounted."
     src=$dir/wallet.dat
@@ -98,7 +98,7 @@ make_wallet(){
 burn_cds(){
     local i iso sectors
     mkdir "$STATE/cd"
-    cp "$STATE/descriptors.txt" "$STATE/cd/"
+    cp "$STATE/descriptors.txt" setup.sh bitcoin-core.tar.gz "$STATE/cd/"
     rpc -rpcwallet=watch_only backupwallet "$STATE/cd/watch_only.dat"
     iso=$STATE/watch_only.iso
     xorriso -as mkisofs -quiet -r -J -o "$iso" "$STATE/cd"
