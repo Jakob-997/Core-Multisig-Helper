@@ -21,7 +21,7 @@ jobs:
           DATA=$D/data
           mkdir -p "$C" "$DATA"
           tar -xzf bitcoin-core.tar.gz --strip-components=1 -C "$C"
-          "$C/bin/bitcoind" -regtest -datadir="$DATA" -daemonwait -networkactive=0 -listen=0 -rpcport=18459
+          "$C/bin/bitcoind" -regtest -datadir="$DATA" -daemonwait -networkactive=0 -listen=0 -fallbackfee=0.0002 -rpcport=18459
           rpc(){ "$C/bin/bitcoin-cli" -regtest -datadir="$DATA" -rpcport=18459 "$@"; }
           node(){ local m=$1; shift; printf '%s\n' "$@" | rpc -stdin "$m"; }
           wallet(){ local w=$1 m=$2; shift 2; printf '%s\n' "$@" | rpc -rpcwallet="$w" -stdin "$m"; }
