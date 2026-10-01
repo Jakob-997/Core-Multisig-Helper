@@ -21,9 +21,9 @@ jobs:
           trap '/tmp/core/bin/bitcoin-cli -datadir=/tmp/data -rpcport=18459 stop || true' EXIT
           make_wallet
           test "$(/tmp/core/bin/bitcoin-cli -datadir=/tmp/data -rpcport=18459 listwallets | jq 'length')" -eq 7
-          test "$(wc -l </tmp/state/descriptors.txt)" -eq 2
+          test "$(wc -l </tmp/state/descriptors.txt)" -eq 1
           while read -r d; do
-            [[ "$d" == wsh\(sortedmulti\(3,* ]]
+            [[ "$d" == wsh\(sortedmulti\(3,*"<0;1>"* ]]
           done </tmp/state/descriptors.txt
           for n in {1..7}; do
             /tmp/core/bin/bitcoin-cli -datadir=/tmp/data -rpcport=18459 -rpcwallet=signer_$n listdescriptors false |
