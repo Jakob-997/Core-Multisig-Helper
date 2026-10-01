@@ -57,7 +57,7 @@ Choose `generate` when creating a wallet for the first time, or `spend` when sig
 
 Glacier includes the official Ubuntu 26.04 xorriso packages and installs them locally in generate mode. No Internet connection is needed.
 
-Connect the optical writer and have one blank disc ready for each signer.
+Connect the optical writer and have one blank disc for the WATCH ONLY wallet plus one blank disc for each signer. A 3-7 wallet therefore needs 8 discs.
 
 Glacier then asks:
 
@@ -67,13 +67,13 @@ Select m-n [default 3-7]:
 
 Press Enter for the default `3-7`, or enter another policy such as `2-5`.
 
-Glacier generates the wallet, burns each signer backup, verifies each disc, and tells you when it is finished.
+Glacier disables swap and keeps its working state in RAM. It generates the wallet, burns the WATCH ONLY disc and each signer backup, verifies every disc, and tells you when it is finished.
 
-There is no seed phrase or private key to transcribe by hand.
+There is no seed phrase or private key to transcribe by hand. When generation is complete, power the live computer off completely; the temporary Glacier state disappears with the live session.
 
 ## Watch-only disc
 
-Glacier first burns a separate WATCH ONLY disc for the online computer. It contains only the public multisig descriptor and a Bitcoin Core watch-only wallet. It contains no private keys.
+Glacier first burns a separate WATCH ONLY disc for the online computer. It contains `watch_only.dat` and `descriptors.txt`: a Bitcoin Core watch-only wallet plus the public multisig descriptor. It contains no private keys.
 
 ## Each signer disc
 
