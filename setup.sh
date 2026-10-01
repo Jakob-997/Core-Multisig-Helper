@@ -25,21 +25,18 @@ EOF
     cat >/etc/systemd/system/glacier-airgap.service <<'EOF'
 [Unit]
 Description=Glacier permanent airgap
+Wants=network-pre.target
 Before=network-pre.target
-DefaultDependencies=no
 [Service]
 Type=oneshot
 ExecStart=/bin/sh -c 'rfkill block all; for i in /sys/class/net/*; do n=${i##*/}; [ "$n" = lo ] || ip link set "$n" down; done'
 RemainAfterExit=yes
 [Install]
-WantedBy=network-pre.target
+WantedBy=multi-user.target
 EOF
-    systemctl mask --now NetworkManager.service systemd-networkd.service networking.service wpa_supplicant.service wpa_supplicant@.service iwd.service ModemManager.service 2>/dev/null || true
+    systemctl mask --now NetworkManager.service NetworkManager-wait-online.service systemd-networkd.service systemd-networkd-wait-online.service networking.service wpa_supplicant.service wpa_supplicant@.service iwd.service ModemManager.service 2>/dev/null || true
     systemctl daemon-reload
-    systemctl enable glacier-airgap.service nftables.service
-    nft -f /etc/nftables.conf
-    rfkill block all
-    for i in /sys/class/net/*; do [[ ${i##*/} == lo ]] || ip link set "${i##*/}" down; done
+    systemctl enable --now glacier-airgap.service nftables.service
 }
 
 install_core(){
