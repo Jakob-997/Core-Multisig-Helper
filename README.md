@@ -23,7 +23,7 @@ For an `M-of-N` wallet:
 - `M` is the number of different signer backups required to spend.
 - `N` is the total number of private signer backups.
 - Core Multisig Helper creates **N private signer discs + 1 public WATCH ONLY disc**.
-- Example: `3-7` requires 3 signers out of 7 and uses **8 discs total**.
+- Example: `2-4` requires 2 signers out of 4 and uses **8 discs total**.
 
 Private keys are generated only after the machine has been airgapped. Swap is disabled and all working wallet state is kept under RAM-backed `/dev/shm`. Each signer should later be used in a **fresh Ubuntu Live session**.
 
@@ -43,7 +43,7 @@ Prepare these before creating a wallet:
 - **A permanent marker** for labeling every disc immediately.
 - **An online Bitcoin wallet/node** for creating PSBTs, monitoring the wallet, and broadcasting completed transactions.
 
-For a `3-7` setup, bring 8 blank discs.
+For a `2-4` setup, bring 5 blank discs.
 
 ## 1. Prepare Ubuntu
 
@@ -96,16 +96,16 @@ generate
 Then enter the multisig policy in `m-n` format:
 
 ```text
-Enter multisig policy in m-n format (for example 3-7):
+Enter multisig policy in m-n format (for example 2-4):
 ```
 
 For example:
 
 ```text
-3-7
+2-4
 ```
 
-means **3 different signers are required from 7 total signer backups**.
+means **2 different signers are required from 4 total signer backups**.
 
 There is no default. You must explicitly choose the mode and policy.
 
@@ -145,12 +145,12 @@ Do not consider a backup complete until the program reports that disc as verifie
 
 ### Label immediately
 
-For a `3-7` wallet, label the public disc something like:
+For a `2-4` wallet, label the public disc something like:
 
 ```text
 CORE MULTISIG HELPER
 WATCH ONLY
-3-OF-7
+2-OF-4
 PUBLIC
 ```
 
@@ -158,12 +158,12 @@ Label the private discs:
 
 ```text
 CORE MULTISIG HELPER
-SIGNER 1 OF 7
-3-OF-7
+SIGNER 1 OF 4
+2-OF-4
 PRIVATE
 ```
 
-then `SIGNER 2 OF 7`, `SIGNER 3 OF 7`, and so on.
+then `SIGNER 2 OF 4`, `SIGNER 3 OF 4`, and so on.
 
 Store the private signer discs separately.
 
@@ -229,7 +229,7 @@ It:
 5. leaves the backup disc itself untouched;
 6. opens the RAM copy in the bundled Bitcoin Core GUI.
 
-For a `3-7` wallet it will tell you that **3 different signer backups out of 7 total** are required.
+For a `2-4` wallet it will tell you that **2 different signer backups out of 4 total** are required.
 
 In Bitcoin Core:
 
@@ -247,7 +247,7 @@ Continue until `M` different signer backups have signed.
 Example:
 
 ```text
-3-of-7 → sign with any 3 different signer discs
+2-of-4 → sign with any 3 different signer discs
 ```
 
 Once the signing threshold is satisfied, take USB 2 back to the online computer and broadcast the completed transaction from your node/wallet.
