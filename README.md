@@ -21,6 +21,10 @@ A small Bitcoin Core helper for creating and using offline multisig wallets.
 
 It is intentionally narrow, but it creates a real wallet you can use: generate the signer keys, burn the backups, create a watch-only wallet, and later load the signers to sign PSBTs.
 
+**No coding knowledge or prior CLI expertise is required.** If you are already familiar with loading and signing PSBTs on an offline computer, the workflow should be straightforward; the terminal is only used to start the helper.
+
+> **Hardware testing help wanted:** I have not yet personally tested the physical optical-disc burn and readback path because I do not currently have blank media. If you can test the CD/DVD writer workflow on Ubuntu 26.04.1, reports are welcome.
+
 This is **not a complete Bitcoin custody guide**. You still choose the M-of-N policy, physical storage, inheritance plan, and online wallet.
 
 ## About this guide
@@ -50,6 +54,17 @@ The upstream wizard uses the same BIP 87 account path and `wsh(sortedmulti(...))
 You can also help by reviewing, testing, and helping move the upstream Python multisig wizard and broader Bitcoin Core multisig GUI work toward merge. Ideally, this helper would eventually become unnecessary because the same workflow would live directly in Bitcoin Core, where it could benefit from the review process, testing, maintenance, and trust model of the Bitcoin Core repository itself.
 
 ## Security design
+
+### Wallet layout
+
+For an `M-of-N` wallet, Core Multisig Helper creates:
+
+- **N private signer discs**
+- **1 public WATCH ONLY disc**
+
+Example: `2-4` means 2 different signers are required from 4 total signer backups, so you need **5 discs total**.
+
+There are no seed words to transcribe.
 
 The goal is a small, understandable process built around Bitcoin Core rather than a new wallet stack.
 
@@ -92,17 +107,6 @@ So the current project is intentionally conservative: use the smallest practical
 For deeper **cold-storage** setups, timelock-based designs such as Liana are also compelling, especially when combined with a carefully chosen cosigner or recovery path. That is a different and less conventional model, and deserves its own guides, threat model, and review rather than being bolted onto this project.
 
 The working idea is therefore: use this as a simple, low-code solution available today, while better backup and recovery designs continue to be reviewed and documented. Ideally, over time there should be clear guides for both a simple threshold-backup “checking account” model and a stronger timelocked cold-storage model.
-
-## Wallet layout
-
-For an `M-of-N` wallet, Core Multisig Helper creates:
-
-- **N private signer discs**
-- **1 public WATCH ONLY disc**
-
-Example: `2-4` means 2 different signers are required from 4 total signer backups, so you need **5 discs total**.
-
-There are no seed words to transcribe.
 
 ## How to run it
 
