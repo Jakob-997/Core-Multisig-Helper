@@ -86,7 +86,7 @@ MN=${MN//-of-/-}; MN=${MN// of /-}; M=${MN%-*}; N=${MN#*-}
 [[ $M =~ ^[1-9][0-9]*$ && $N =~ ^[1-9][0-9]*$ && $M -le $N && $N -ge 2 && $N -le 20 ]] || die 'Enter m-n, for example 2-5.'
 [[ ! -e $STATE ]] || die 'Existing Glacier wallet.'
 [[ -b $DRIVE ]] || die "No optical drive: $DRIVE"
-command -v nft rfkill xorriso eject jq >/dev/null || die 'Install prerequisites first.'
+for c in nft rfkill xorriso eject jq; do command -v "$c" >/dev/null || die "Missing $c."; done
 
 airgap
 mkdir -m 700 "$STATE"
