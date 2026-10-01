@@ -10,11 +10,13 @@
 
 A small Bitcoin Core helper for creating and using offline multisig wallets.
 
-Core Multisig Helper is intentionally narrow. It generates independent Bitcoin Core signer wallets in an airgapped Ubuntu Live session, writes each signer backup to its own optical disc, creates a separate public watch-only backup, and later helps you load one signer at a time for offline PSBT signing.
+Core Multisig Helper is intentionally narrow, but it creates a real wallet you can actually use. It helps you generate the multisig keys and backups, then later load those signer backups and spend from the same wallet with PSBTs.
+
+It generates independent Bitcoin Core signer wallets in an airgapped Ubuntu Live session, writes each signer backup to its own optical disc, creates a separate public watch-only backup, and later helps you load one signer at a time for offline signing.
 
 It does **not** try to be a complete wallet application or replace your online Bitcoin node.
 
-> **Status:** polished testing draft. Test the complete generate → restore → sign → broadcast workflow with disposable funds before using meaningful money.
+> **Status:** working testing draft, **not audited**. The multisig construction follows the WSH/BIP87 `sortedmulti` approach used by the Bitcoin Core multisig wizard work in PR #36325. The generate, watch-only, sign, combine/finalize, backup, restore, and signer-loading paths have been exercised in automated tests, but you should still test the complete hardware workflow with disposable funds before using meaningful money.
 
 ## Overview
 
@@ -286,7 +288,7 @@ Before treating this project as finalized for real funds, the bundled Core versi
 For quick development testing, you can install Git, clone the current `main` branch, and launch the helper:
 
 ```bash
-sudo apt install -y git && git clone --depth 1 https://github.com/Jakob-997/Glacier-2.git Core-Multisig-Helper && cd Core-Multisig-Helper && sudo ./setup.sh
+sudo apt install -y git && git clone --depth 1 https://github.com/Jakob-997/Core-Multisig-Helper.git Core-Multisig-Helper && cd Core-Multisig-Helper && sudo ./setup.sh
 ```
 
 **Do not use this shortcut for real funds.** A real setup should use independently verified Ubuntu and Core Multisig Helper release artifacts rather than trusting a live clone of `main`.
