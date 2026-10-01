@@ -23,6 +23,14 @@ It is intentionally narrow, but it creates a real wallet you can use: generate t
 
 This is **not a complete Bitcoin custody guide**. You still choose the M-of-N policy, physical storage, inheritance plan, and online wallet.
 
+## About this guide
+
+The first half of this README explains what the project is, its security model, its limitations, and the tradeoffs behind the design. Read that before trusting it with funds.
+
+If you already understand the design and just want the operating instructions, jump to [**How to run it**](#how-to-run-it).
+
+## Project status and references
+
 > **Status:** working testing draft, **not audited**. The multisig construction follows the WSH/BIP87 `sortedmulti` approach used by the Bitcoin Core multisig wizard work in PR #36325. Core wallet generation, backup/restore, watch-only, signing, PSBT finalization, and signer loading have been tested. Test the complete hardware workflow with disposable funds first.
 
 ### Audit status
@@ -55,18 +63,6 @@ The goal is a small, understandable process built around Bitcoin Core rather tha
 
 During initial generation, all N signer keys coexist on the one offline generation machine.
 
-### Tradeoffs and future direction
-
-This is not intended to be the final or only way to build secure Bitcoin custody. I started here mainly because there is value in having a very small, understandable Bitcoin Core-based alternative to more complicated and error-prone manual multisig guides and projects with a larger custom trust surface.
-
-For a more **checking-account-like** setup, a threshold secret-sharing design such as Codex32 may ultimately be a better fit. It can avoid the multisig descriptor privacy tradeoff described above: you would not need every backup to carry all cosigner xpubs and therefore the information needed to derive the wallet's addresses. That is an attractive design, and I may implement a Codex32-based version or guide soon. The tradeoff is that it is more complex to implement correctly and, in the form I would rely on here, has less real-world review and deployment history than the Bitcoin Core multisig path used by this project today.
-
-So the current project is intentionally conservative: use the smallest practical amount of glue code around Bitcoin Core and provide a working alternative to custody instructions that require more manual descriptor assembly, more opportunities for operator error, or more custom wallet logic.
-
-For deeper **cold-storage** setups, timelock-based designs such as Liana are also compelling, especially when combined with a carefully chosen cosigner or recovery path. That is a different and less conventional model, and deserves its own guides, threat model, and review rather than being bolted onto this project.
-
-The working idea is therefore: use this as a simple, low-code solution available today, while better backup and recovery designs continue to be reviewed and documented. Ideally, over time there should be clear guides for both a simple threshold-backup “checking account” model and a stronger timelocked cold-storage model.
-
 ### Physical airgap strongly recommended
 
 The script creates a software airgap, but malware or a sufficiently serious system compromise could theoretically defeat software controls.
@@ -85,6 +81,18 @@ Each signer disc additionally contains an unencrypted Bitcoin Core `wallet.dat` 
 
 This is the main tradeoff: the CDs provide no at-rest encryption or descriptor privacy, in exchange for a much simpler backup and recovery process with no additional passphrase or encryption secret to lose.
 
+### Tradeoffs and future direction
+
+This is not intended to be the final or only way to build secure Bitcoin custody. I started here mainly because there is value in having a very small, understandable Bitcoin Core-based alternative to more complicated and error-prone manual multisig guides and projects with a larger custom trust surface.
+
+For a more **checking-account-like** setup, a threshold secret-sharing design such as Codex32 may ultimately be a better fit. It can avoid the multisig descriptor privacy tradeoff described above: you would not need every backup to carry all cosigner xpubs and therefore the information needed to derive the wallet's addresses. That is an attractive design, and I may implement a Codex32-based version or guide soon. The tradeoff is that it is more complex to implement correctly and, in the form I would rely on here, has less real-world review and deployment history than the Bitcoin Core multisig path used by this project today.
+
+So the current project is intentionally conservative: use the smallest practical amount of glue code around Bitcoin Core and provide a working alternative to custody instructions that require more manual descriptor assembly, more opportunities for operator error, or more custom wallet logic.
+
+For deeper **cold-storage** setups, timelock-based designs such as Liana are also compelling, especially when combined with a carefully chosen cosigner or recovery path. That is a different and less conventional model, and deserves its own guides, threat model, and review rather than being bolted onto this project.
+
+The working idea is therefore: use this as a simple, low-code solution available today, while better backup and recovery designs continue to be reviewed and documented. Ideally, over time there should be clear guides for both a simple threshold-backup “checking account” model and a stronger timelocked cold-storage model.
+
 ## Wallet layout
 
 For an `M-of-N` wallet, Core Multisig Helper creates:
@@ -96,7 +104,11 @@ Example: `2-4` means 2 different signers are required from 4 total signer backup
 
 There are no seed words to transcribe.
 
-## What you need
+## How to run it
+
+Everything below this point is the practical setup and spending procedure. Read the security sections above first, then follow these steps in order.
+
+### What you need
 
 - A **64-bit x86-64 capable laptop or desktop**. A laptop is the expected setup; if you want a physical airgap, prefer one with removable Wi-Fi/Bluetooth hardware.
 - Two USB drives:
@@ -107,7 +119,7 @@ There are no seed words to transcribe.
 - A permanent marker.
 - An online Bitcoin wallet/node for creating PSBTs and broadcasting transactions.
 
-## 1. Prepare the USBs
+### 1. Prepare the USBs
 
 Download and verify Ubuntu 26.04.1 Desktop, then write it to **USB 1**.
 
@@ -115,7 +127,7 @@ Download a Core Multisig Helper release, verify it against the independently obt
 
 Boot Ubuntu from USB 1 and use the live environment. **Do not install Ubuntu.**
 
-## 2. Label the discs
+### 2. Label the discs
 
 Choose your M-of-N policy **before** generating the wallet, then label every blank disc before inserting any of them into the writer.
 
@@ -131,7 +143,7 @@ SIGNER 4 OF 4 — 2-OF-4 — PRIVATE
 
 Do this while the discs are still blank. Once generation starts, use the pre-labeled discs exactly when the script asks for them.
 
-## 3. Generate the wallet
+### 3. Generate the wallet
 
 Insert USB 2, connect the optical writer, and have the pre-labeled discs ready.
 
@@ -163,7 +175,7 @@ AIRGAP ACTIVE — networking disabled before key generation.
 
 It then creates the wallet in RAM.
 
-## 4. Burn the backups
+### 4. Burn the backups
 
 The script first writes the **WATCH ONLY** disc:
 
@@ -185,7 +197,7 @@ The discs should already be labeled before generation. As each disc is written a
 
 When generation is finished, **power the live computer off**.
 
-## 5. Online wallet
+### 5. Online wallet
 
 Treat the **online computer as untrusted**. Its job is to monitor the wallet, construct PSBTs and broadcast transactions—not to tell you what is safe to sign.
 
@@ -199,7 +211,7 @@ Whichever online wallet you use, follow these rules:
 - **Before signing a spend, verify the destination, amount, fee and every change output on the offline signer.** Confirm that each change output belongs to your multisig wallet.
 - Assume the online computer may be lying to you. **Only trust addresses derived and displayed by the fresh live-booted offline laptop with one of your authentic Core Multisig Helper discs loaded.** Do not treat an address shown only by the online wallet as authoritative.
 
-## 6. Sign a PSBT
+### 6. Sign a PSBT
 
 Create the PSBT online and save it to **USB 2**.
 
@@ -234,7 +246,9 @@ For a 2-of-4 wallet, sign with any 2 different signer discs.
 
 Then return USB 2 to the online computer and broadcast the completed transaction.
 
-## Bitcoin Core
+## Technical notes
+
+### Bitcoin Core
 
 The repository currently includes frozen Bitcoin Core **32.0rc2 x86-64 Linux**, a release-candidate build.
 
@@ -246,7 +260,7 @@ SHA256:
 
 The script verifies this before starting Core.
 
-## Testing only
+### Testing only
 
 For development testing:
 
