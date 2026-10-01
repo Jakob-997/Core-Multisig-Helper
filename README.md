@@ -47,11 +47,10 @@ sudo ./setup.sh
 At startup:
 
 ```text
-m [3]:
-n [7]:
+Select m-of-n [3-of-7]:
 ```
 
-Press Enter twice for 3-of-7, or enter your own m and n.
+Press Enter for the default 3-of-7, or type another policy such as `2-5`, `2-of-5`, or `2 of 5`.
 
 Glacier's software airgap blocks all network traffic except local loopback traffic,
 and `rfkill` blocks radios. Bitcoin Core is also started with networking disabled.
