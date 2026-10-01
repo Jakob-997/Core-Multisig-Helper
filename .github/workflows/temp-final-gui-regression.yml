@@ -22,6 +22,7 @@ jobs:
           grep -Fq 'cp "$STATE/descriptors.txt" "$STATE/cd/"' setup.sh
           ! grep -Fq 'setup.sh bitcoin-core.tar.gz "$STATE/cd/"' setup.sh
           echo '0255103718033e6aee15fa944717fc277e047b845bff1e7408af0ea732d8d0c1  bitcoin-core.tar.gz' | sha256sum -c -
+          curl -fsS https://bitcoincore.org/bin/bitcoin-core-32.0/test.rc2/SHA256SUMS | grep -F '0255103718033e6aee15fa944717fc277e047b845bff1e7408af0ea732d8d0c1  bitcoin-32.0rc2-x86_64-linux-gnu.tar.gz'
 
       - name: Generate sign finalize backup restore and launch GUI
         run: |
@@ -102,4 +103,5 @@ jobs:
           jq -e '.private_keys_enabled == true' "$T/gui-wallet.json"
           "$C/bin/bitcoin-cli" -regtest -datadir="$G" -rpcport=18460 getnetworkinfo | jq -e '.networkactive == false'
           "$C/bin/bitcoin-cli" -regtest -datadir="$G" -rpcport=18460 stop
-          wait "$QPID" || true
+          for i in {1..10}; do kill -0 "$QPID" 2>/dev/null || break; sleep 1; done
+          kill "$QPID" 2>/dev/null || true
