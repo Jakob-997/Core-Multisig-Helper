@@ -1,0 +1,15 @@
+name: Temporary offline xorriso check
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate script
+        run: bash -n setup.sh
+      - name: Install bundled xorriso offline on Ubuntu 26.04
+        run: |
+          docker run --rm -v "$PWD/packages:/packages:ro" ubuntu:26.04 bash -lc '
+            dpkg -i /packages/*.deb
+            xorriso -version
+          '
