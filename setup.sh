@@ -29,7 +29,7 @@ Wants=network-pre.target
 Before=network-pre.target
 [Service]
 Type=oneshot
-ExecStart=/bin/sh -c 'rfkill block all; for i in /sys/class/net/*; do n=${i##*/}; [ "$n" = lo ] || ip link set "$n" down; done'
+ExecStart=/bin/sh -c 'rfkill block all 2>/dev/null || true; for i in /sys/class/net/*; do n=${i##*/}; [ "$n" = lo ] || ip link set "$n" down 2>/dev/null || true; done'
 RemainAfterExit=yes
 [Install]
 WantedBy=multi-user.target
