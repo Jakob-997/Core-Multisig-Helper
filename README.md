@@ -33,6 +33,12 @@ Versioned releases are planned soon so an auditor can review a specific immutabl
 
 This project is open-source public utility software. Independent review is welcome. If you are qualified and would like to help audit it, please get in touch. If additional motivation is needed, a community audit bounty can be raised. The project is intentionally small, so a focused audit should be relatively limited in scope.
 
+### Bitcoin Core reference implementation
+
+This project used Bitcoin Core [PR #36325 — Contrib: add multisig wizard](https://github.com/bitcoin/bitcoin/pull/36325) and its [`contrib/multisig/wizard.py`](https://github.com/bitcoin/bitcoin/blob/2803e1518bb22394a80bac94e2435bb3982d0cde/contrib/multisig/wizard.py) implementation as important references for the multisig construction and Bitcoin Core RPC flow.
+
+The upstream wizard uses the same BIP 87 account path and `wsh(sortedmulti(...))` multipath descriptor construction used here. If and when that work is officially merged into Bitcoin Core, a future version of Core Multisig Helper can consider directly adapting the upstream implementation instead of maintaining duplicate wallet-construction logic.
+
 ## Security design
 
 The goal is a small, understandable process built around Bitcoin Core rather than a new wallet stack.
