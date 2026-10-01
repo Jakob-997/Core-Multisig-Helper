@@ -168,7 +168,7 @@ Whichever online wallet you use, follow these rules:
 
 - **Never trust an online-generated receive address by itself.** Before sending funds, verify that exact address independently on a fresh offline Ubuntu session using one of your signer discs, or an authentic offline copy of your WATCH ONLY wallet/descriptor.
 - **Before signing a spend, verify the destination, amount, fee and every change output on the offline signer.** Confirm that each change output belongs to your multisig wallet.
-- Assume the online computer may be lying to you. The offline live-booted environment, using your authentic signer backup or independently verified public descriptor, is the checkpoint that decides whether the transaction is correct.
+- Assume the online computer may be lying to you. **Only trust addresses derived and displayed by the fresh live-booted offline laptop with one of your authentic Core Multisig Helper discs loaded.** Do not treat an address shown only by the online wallet as authoritative.
 
 ## 6. Sign a PSBT
 
