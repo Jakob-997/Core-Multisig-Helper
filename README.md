@@ -68,6 +68,7 @@ There are no seed words to transcribe.
 
 ## What you need
 
+- A **64-bit x86-64 capable laptop or desktop**. A laptop is the expected setup; if you want a physical airgap, prefer one with removable Wi-Fi/Bluetooth hardware.
 - Two USB drives:
   - **USB 1:** verified Ubuntu 26.04.1 x86-64 Desktop Live.
   - **USB 2:** Core Multisig Helper and, later, PSBT transfer.
