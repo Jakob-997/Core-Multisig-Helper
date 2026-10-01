@@ -75,7 +75,7 @@ make_wallet(){
     for ((i=1;i<=N;i++)); do
         private="${raw/${xpub[i]}/${xprv[i]}}"
         checksum=$(node getdescriptorinfo "$private" | jq -r .checksum)
-        request="[{\"desc\":\"$private#$checksum\",\"active\":true,\"timestamp\":\"now\",\"range\":[0,999]}]"
+        request=$(jq -cn --arg desc "$private#$checksum" '[{desc:$desc,active:true,timestamp:"now",range:[0,999]}]')
         wallet "signer_$i" importdescriptors "$request" >/dev/null
     done
 }
