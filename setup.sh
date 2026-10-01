@@ -48,7 +48,9 @@ make_wallet(){
     raw="wsh(sortedmulti($M"
     for ((i=1;i<=N;i++)); do raw+=",${origin[i]}${xpub[i]}/<0;1>/*"; done
     raw+='))'
-    checksum=$(node getdescriptorinfo "$raw" | jq -r .checksum)
+    account=$(node getdescriptorinfo "$raw")
+    [[ $(jq '.multipath_expansion|length' <<<"$account") == 2 ]] || die 'Bad descriptor.'
+    checksum=$(jq -r .checksum <<<"$account")
     echo "$raw#$checksum" >"$STATE/descriptors.txt"
 
     for ((i=1;i<=N;i++)); do
@@ -81,7 +83,7 @@ burn_cds(){
 
 read -rp 'm [3]: ' M </dev/tty; M=${M:-3}
 read -rp 'n [7]: ' N </dev/tty; N=${N:-7}
-[[ $M =~ ^[1-9][0-9]*$ && $N =~ ^[1-9][0-9]*$ && $M -le $N && $N -le 20 ]] || die 'Require 1 <= m <= n <= 20.'
+[[ $M =~ ^[1-9][0-9]*$ && $N =~ ^[1-9][0-9]*$ && $M -le $N && $N -ge 2 && $N -le 20 ]] || die 'Require 1 <= m <= n and 2 <= n <= 20.'
 [[ ! -e $STATE ]] || die 'Existing Glacier wallet.'
 [[ -b $DRIVE ]] || die "No optical drive: $DRIVE"
 command -v nft rfkill xorriso eject jq >/dev/null || die 'Install prerequisites first.'
