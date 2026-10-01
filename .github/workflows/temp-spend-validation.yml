@@ -1,0 +1,37 @@
+name: Temporary spend-mode validation
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static checks
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y shellcheck
+          bash -n setup.sh
+          shellcheck setup.sh
+          echo '0255103718033e6aee15fa944717fc277e047b845bff1e7408af0ea732d8d0c1  bitcoin-core.tar.gz' | sha256sum -c -
+      - name: Validate copied backup wallet layout
+        run: |
+          set -Eeuo pipefail
+          C=/tmp/core
+          A=/tmp/a
+          B=/tmp/b
+          mkdir -p "$C" "$A" "$B/wallets/signer"
+          tar -xzf bitcoin-core.tar.gz --strip-components=1 -C "$C"
+          "$C/bin/bitcoind" -regtest -datadir="$A" -daemonwait -networkactive=0 -listen=0 -rpcport=18459
+          "$C/bin/bitcoin-cli" -regtest -datadir="$A" -rpcport=18459 createwallet signer false true >/dev/null
+          "$C/bin/bitcoin-cli" -regtest -datadir="$A" -rpcport=18459 -rpcwallet=signer addhdkey >/dev/null
+          "$C/bin/bitcoin-cli" -regtest -datadir="$A" -rpcport=18459 -rpcwallet=signer backupwallet /tmp/signer.dat
+          "$C/bin/bitcoin-cli" -regtest -datadir="$A" -rpcport=18459 stop
+          sleep 1
+          cp /tmp/signer.dat "$B/wallets/signer/wallet.dat"
+          "$C/bin/bitcoind" -regtest -datadir="$B" -daemonwait -networkactive=0 -listen=0 -rpcport=18460 -wallet=signer
+          "$C/bin/bitcoin-cli" -regtest -datadir="$B" -rpcport=18460 -rpcwallet=signer getwalletinfo | grep -q '"private_keys_enabled": true'
+          "$C/bin/bitcoin-cli" -regtest -datadir="$B" -rpcport=18460 stop
+          desc='wsh(sortedmulti(3,key1,key2,key3,key4,key5,key6,key7))#test'
+          [[ $desc =~ sortedmulti\(([0-9]+), ]]
+          M=${BASH_REMATCH[1]}; commas=${desc//[^,]/}; N=${#commas}
+          test "$M" = 3
+          test "$N" = 7
