@@ -1,11 +1,20 @@
 # Core Multisig Helper
 
 ```text
-             /\
-            /  \
-           / /\ \
-          /_/  \_\
-     CORE MULTISIG HELPER
+   ██████╗ ██████╗ ██████╗ ███████╗
+  ██╔════╝██╔═══██╗██╔══██╗██╔════╝
+  ██║     ██║   ██║██████╔╝█████╗
+  ██║     ██║   ██║██╔══██╗██╔══╝
+  ╚██████╗╚██████╔╝██║  ██║███████╗
+   ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝
+
+       MULTISIG HELPER
+
+      [◎]   [◎]   [◎]   [◎]
+        \     |     |     /
+             M-of-N
+               |
+            ₿ SPEND
 ```
 
 A small Bitcoin Core helper for creating and using offline multisig wallets.
