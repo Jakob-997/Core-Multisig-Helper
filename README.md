@@ -29,11 +29,10 @@ Before running Glacier, while still online, make sure these packages are install
 
 For real use, download a specific Glacier release and verify it before running it.
 
-For testing, install Git and clone the current repository:
+For testing, run:
 
 ```bash
-sudo apt install -y git
-git clone --depth 1 https://github.com/Jakob-997/Glacier-2.git && cd Glacier-2
+sudo apt install -y git && git clone --depth 1 https://github.com/Jakob-997/Glacier-2.git && cd Glacier-2 && sudo ./setup.sh
 ```
 
 Connect the optical writer at `/dev/sr0`, have one blank CD-R per signer ready,
