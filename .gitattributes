@@ -2,3 +2,4 @@
 *.sh text eol=lf
 *.py text eol=lf
 assets/bitcoin-core.svg -text
+vendor/*.tar.gz -text
