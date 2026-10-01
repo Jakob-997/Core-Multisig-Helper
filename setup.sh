@@ -10,7 +10,7 @@ DATA=$STATE/data
 DRIVE=/dev/sr0
 
 die(){ echo "ERROR: $*" >&2; exit 1; }
-(( EUID == 0 )) || die 'Run Glacier with sudo: sudo ./setup.sh'
+(( EUID == 0 )) || die 'Run Core Multisig Helper with sudo: sudo ./setup.sh'
 rpc(){ "$CORE/bin/bitcoin-cli" -datadir="$DATA" -rpcport=18459 "$@"; }
 node(){ local m=$1; shift; printf '%s\n' "$@" | rpc -stdin "$m"; }
 wallet(){ local w=$1 m=$2; shift 2; printf '%s\n' "$@" | rpc -rpcwallet="$w" -stdin "$m"; }
@@ -18,7 +18,7 @@ wallet(){ local w=$1 m=$2; shift 2; printf '%s\n' "$@" | rpc -rpcwallet="$w" -st
 airgap(){
     nft -f - <<'EOF'
 flush ruleset
-table inet glacier2 {
+table inet cmh {
  chain input { type filter hook input priority -300; policy drop; iifname "lo" accept; }
  chain output { type filter hook output priority -300; policy drop; oifname "lo" accept; }
 }
@@ -51,7 +51,7 @@ spend_wallet(){
     [[ $M -le $N && $N -ge 2 ]] || die 'Invalid multisig policy.'
     mkdir -p "$DATA/wallets/signer"
     cp "$src" "$DATA/wallets/signer/wallet.dat"
-    gui_user=${SUDO_USER:-}; [[ -n $gui_user && $gui_user != root ]] || die 'Run Glacier with sudo from the Ubuntu desktop user.'
+    gui_user=${SUDO_USER:-}; [[ -n $gui_user && $gui_user != root ]] || die 'Run Core Multisig Helper with sudo from the Ubuntu desktop user.'
     chown -R "$gui_user:$(id -gn "$gui_user")" "$STATE"
     echo "Wallet policy detected: $M-of-$N multisig. You need $M different signer backups out of $N total."
     echo "Sign the PSBT in Bitcoin Core and save the partially signed PSBT to your transfer USB."
@@ -130,11 +130,11 @@ burn_cds(){
 echo 'CORE MULTISIG HELPER'
 read -rp 'Select mode: generate or spend: ' MODE </dev/tty
 [[ $MODE == generate || $MODE == spend ]] || die 'Enter exactly: generate or spend.'
-[[ ! -e $STATE ]] || { [[ $MODE == generate ]] || die 'Existing Glacier state. If you just generated a wallet, reboot into a fresh Ubuntu Live session before spending; spend mode is intentionally fresh-session only.'; rpc getblockchaininfo >/dev/null 2>&1 && die 'A Glacier wallet is still running. Finish it or reboot before generating another.'; read -rp 'WARNING: A previous Glacier wallet was detected. Type NEW to permanently delete it and create a completely new wallet. Old CDs/backups belong to the old wallet and MUST NOT be mixed with the new one: ' RESET </dev/tty; [[ $RESET == NEW ]] || die 'Canceled.'; rm -rf -- "$STATE"; }
+[[ ! -e $STATE ]] || { [[ $MODE == generate ]] || die 'Existing Core Multisig Helper state. If you just generated a wallet, reboot into a fresh Ubuntu Live session before spending; spend mode is intentionally fresh-session only.'; rpc getblockchaininfo >/dev/null 2>&1 && die 'A Core Multisig Helper wallet is still running. Finish it or reboot before generating another.'; read -rp 'WARNING: A previous Core Multisig Helper wallet was detected. Type NEW to permanently delete it and create a completely new wallet. Old CDs/backups belong to the old wallet and MUST NOT be mixed with the new one: ' RESET </dev/tty; [[ $RESET == NEW ]] || die 'Canceled.'; rm -rf -- "$STATE"; }
 for c in nft rfkill ip systemctl swapoff sha256sum findmnt; do command -v "$c" >/dev/null || die "Missing $c."; done
 
 if [[ $MODE == generate ]]; then
-    read -rp 'Enter multisig policy in m-n format (for example 3-7): ' MN </dev/tty
+    read -rp 'Enter multisig policy in m-n format (for example 2-4): ' MN </dev/tty
     MN=${MN//-of-/-}; MN=${MN// of /-}; M=${MN%-*}; N=${MN#*-}
     [[ $M =~ ^[1-9][0-9]*$ && $N =~ ^[1-9][0-9]*$ && $M -le $N && $N -ge 2 && $N -le 20 ]] || die 'Enter m-n, for example 2-5.'
     [[ -b $DRIVE ]] || die "No optical drive: $DRIVE"
