@@ -68,7 +68,7 @@ make_wallet(){
     checksum=$(jq -r .checksum <<<"$account")
     echo "$raw#$checksum" >"$STATE/descriptors.txt"
     node createwallet watch_only true true >/dev/null
-    request="[{"desc":"$raw#$checksum","active":true,"timestamp":"now","range":[0,999]}]"
+    request=$(jq -cn --arg desc "$raw#$checksum" '[{desc:$desc,active:true,timestamp:"now",range:[0,999]}]')
     wallet watch_only importdescriptors "$request" >/dev/null
     [[ $(rpc -rpcwallet=watch_only getwalletinfo | jq -r .private_keys_enabled) == false ]] || die 'WATCH ONLY contains private keys.'
 
