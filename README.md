@@ -13,7 +13,7 @@ No seed words or private keys need to be written down by hand.
 Glacier:
 
 1. airgaps the computer;
-2. asks for your multisig policy, with `3-7` as the default;
+2. asks you to explicitly choose your multisig policy in `m-n` format;
 3. generates the independent Bitcoin Core signer wallets;
 4. builds the multisig descriptor;
 5. burns one public WATCH ONLY disc for the online computer;
@@ -52,10 +52,10 @@ sudo ./setup.sh
 Glacier asks:
 
 ```text
-Generate keys or spend? [generate]:
+Select mode: generate or spend:
 ```
 
-Choose `generate` when creating a wallet for the first time, or `spend` when signing a transaction.
+Enter `generate` when creating a wallet for the first time, or `spend` when signing a transaction. There is no default; you must choose one.
 
 ## Generating a wallet
 
@@ -66,10 +66,10 @@ Connect the optical writer and have one blank disc for the WATCH ONLY wallet plu
 Glacier then asks:
 
 ```text
-Select m-n [default 3-7]:
+Enter multisig policy in m-n format (for example 3-7):
 ```
 
-Press Enter for the default `3-7`, or enter another policy such as `2-5`.
+Enter the threshold first and total number of signer backups second, separated by a hyphen. For example, `3-7` means 3 signatures are required from 7 total signer backups. There is no default; you must enter a policy.
 
 Glacier disables swap and keeps its working state in RAM. It generates the wallet, burns the WATCH ONLY disc and each signer backup, verifies every disc, and tells you when it is finished.
 
