@@ -31,7 +31,7 @@ This is **unaudited software**. AI-assisted review and automated testing have be
 
 Versioned releases are planned soon so an auditor can review a specific immutable version. An easy way to help is to take a release to a Bitcoin security expert and ask them to verify that it correctly and safely creates, backs up, restores, and signs with the intended Bitcoin Core multisig wallet.
 
-This project is open-source public utility software. Independent review is welcome. If you are qualified and would like to help audit it, please get in touch. If additional motivation is needed, a community audit bounty can be raised. The project is intentionally small, so a focused audit should be relatively limited in scope.
+This project is open-source public utility software. Independent review is welcome. If you are qualified and would like to help audit it, please get in touch. If additional motivation is needed, a community audit bounty can be raised, and anyone is free to organize fundraising to support an independent audit. The project is intentionally small, so a focused audit should be relatively limited in scope.
 
 ### Bitcoin Core reference implementation
 
