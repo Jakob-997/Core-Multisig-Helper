@@ -1,57 +1,125 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 set +x
-ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
-# shellcheck source=lib/common.sh
-source "$ROOT/lib/common.sh"
-# shellcheck source=lib/options.sh
-source "$ROOT/lib/options.sh"
-parse_options "$@"
-select_modules
-[[ $EUID == 0 ]] || die 'Run with sudo bash setup.sh on a disposable Ubuntu installation.'
-if [[ $SKIP_CD == 0 ]]; then
-    [[ -t 0 && -t 1 ]] || die 'A local terminal is required for swapping CDs. Use --test to skip CDs.'
+umask 077
+
+cd "$(dirname "${BASH_SOURCE[0]}")"
+STATE=/dev/shm/glacier2
+CORE=$STATE/core
+DATA=$STATE/data
+DRIVE=/dev/sr0
+
+die(){ echo "ERROR: $*" >&2; exit 1; }
+rpc(){ "$CORE/bin/bitcoin-cli" -datadir="$DATA" -rpcport=18459 "$@"; }
+node(){ local m=$1; shift; printf '%s\n' "$@" | rpc -stdin "$m"; }
+wallet(){ local w=$1 m=$2; shift 2; printf '%s\n' "$@" | rpc -rpcwallet="$w" -stdin "$m"; }
+
+airgap(){
+    nft -f - <<'EOF'
+flush ruleset
+table inet glacier2 {
+ chain input { type filter hook input priority -300; policy drop; iifname "lo" accept; }
+ chain output { type filter hook output priority -300; policy drop; oifname "lo" accept; }
+}
+EOF
+    rfkill block all 2>/dev/null || true
+    for i in /sys/class/net/*; do n=${i##*/}; [ "$n" = lo ] || ip link set "$n" down 2>/dev/null || true; done
+}
+
+install_core(){
+    mkdir "$CORE" "$DATA"
+    tar -xzf bitcoin-core.tar.gz --strip-components=1 -C "$CORE"
+    "$CORE/bin/bitcoind" -datadir="$DATA" -daemonwait -networkactive=0 -listen=0 -rpcport=18459
+    trap 'rpc stop >/dev/null 2>&1 || true' EXIT
+}
+
+make_wallet(){
+    local i w root account raw private checksum request
+    local -a origin xpub xprv
+
+    for ((i=1;i<=N;i++)); do
+        w=signer_$i
+        node createwallet "$w" false true >/dev/null
+        root=$(rpc -rpcwallet="$w" addhdkey | jq -r .xpub)
+        account=$(wallet "$w" derivehdkey m/87h/0h/0h "{\"hdkey\":\"$root\",\"private\":true}")
+        origin[i]=$(jq -r .origin <<<"$account")
+        xpub[i]=$(jq -r .xpub <<<"$account")
+        xprv[i]=$(jq -r .xprv <<<"$account")
+    done
+
+    raw="wsh(sortedmulti($M"
+    for ((i=1;i<=N;i++)); do raw+=",${origin[i]}${xpub[i]}/<0;1>/*"; done
+    raw+='))'
+    account=$(node getdescriptorinfo "$raw")
+    [[ $(jq '.multipath_expansion|length' <<<"$account") == 2 ]] || die 'Bad descriptor.'
+    checksum=$(jq -r .checksum <<<"$account")
+    echo "$raw#$checksum" >"$STATE/descriptors.txt"
+    node createwallet watch_only true true >/dev/null
+    request=$(jq -cn --arg desc "$raw#$checksum" '[{desc:$desc,active:true,timestamp:"now",range:[0,999]}]')
+    wallet watch_only importdescriptors "$request" >/dev/null
+    [[ $(rpc -rpcwallet=watch_only getwalletinfo | jq -r .private_keys_enabled) == false ]] || die 'WATCH ONLY contains private keys.'
+
+    for ((i=1;i<=N;i++)); do
+        private="${raw/${xpub[i]}/${xprv[i]}}"
+        checksum=$(node getdescriptorinfo "$private" | jq -r .checksum)
+        request=$(jq -cn --arg desc "$private#$checksum" '[{desc:$desc,active:true,timestamp:"now",range:[0,999]}]')
+        wallet "signer_$i" importdescriptors "$request" >/dev/null
+    done
+}
+
+burn_cds(){
+    local i iso sectors
+    mkdir "$STATE/cd"
+    cp "$STATE/descriptors.txt" "$STATE/cd/"
+    rpc -rpcwallet=watch_only backupwallet "$STATE/cd/watch_only.dat"
+    iso=$STATE/watch_only.iso
+    xorriso -as mkisofs -quiet -r -J -o "$iso" "$STATE/cd"
+    read -rp "Insert blank CD-R for WATCH ONLY, then press Enter: " </dev/tty
+    xorriso -as cdrecord -v dev="$DRIVE" -dao "$iso"
+    eject "$DRIVE"
+    read -rp "Reinsert WATCH ONLY, then press Enter: " </dev/tty
+    sectors=$(( $(stat -c %s "$iso") / 2048 ))
+    cmp "$iso" <(dd if="$DRIVE" bs=2048 count="$sectors" status=none)
+    eject "$DRIVE"
+    echo "WATCH ONLY verified. Use this disc on the online computer."
+    rm "$STATE/cd/watch_only.dat"
+    for ((i=1;i<=N;i++)); do
+        rm -f "$STATE/cd/wallet.dat"
+        rpc -rpcwallet="signer_$i" backupwallet "$STATE/cd/wallet.dat"
+        iso=$STATE/signer_$i.iso
+        xorriso -as mkisofs -quiet -r -J -o "$iso" "$STATE/cd"
+        read -rp "Insert blank CD-R for signer $i, then press Enter: " </dev/tty
+        xorriso -as cdrecord -v dev="$DRIVE" -dao "$iso"
+        eject "$DRIVE"
+        read -rp "Reinsert signer $i, then press Enter: " </dev/tty
+        sectors=$(( $(stat -c %s "$iso") / 2048 ))
+        cmp "$iso" <(dd if="$DRIVE" bs=2048 count="$sectors" status=none)
+        eject "$DRIVE"
+        echo "Signer $i verified. Label and store it separately."
+    done
+}
+
+read -rp 'Generate keys or spend? [generate]: ' MODE </dev/tty; MODE=${MODE:-generate}
+[[ $MODE == generate || $MODE == spend ]] || die 'Enter generate or spend.'
+[[ ! -e $STATE ]] || die 'Existing Glacier state.'
+for c in nft rfkill ip swapoff sha256sum; do command -v "$c" >/dev/null || die "Missing $c."; done
+
+if [[ $MODE == generate ]]; then
+    read -rp 'Select m-n [default 3-7]: ' MN </dev/tty; MN=${MN:-3-7}
+    MN=${MN//-of-/-}; MN=${MN// of /-}; M=${MN%-*}; N=${MN#*-}
+    [[ $M =~ ^[1-9][0-9]*$ && $N =~ ^[1-9][0-9]*$ && $M -le $N && $N -ge 2 && $N -le 20 ]] || die 'Enter m-n, for example 2-5.'
+    [[ -b $DRIVE ]] || die "No optical drive: $DRIVE"
+    for c in xorriso eject jq; do command -v "$c" >/dev/null || die "Missing $c."; done
 fi
-[[ -z ${SSH_CONNECTION:-}${SSH_TTY:-} ]] || die 'Do not run over SSH.'
-[[ -d /run/systemd/system ]] || die 'A booted systemd host is required.'
-# shellcheck source=/dev/null
-source /etc/os-release
-[[ $ID == ubuntu && ( $VERSION_ID == 24.04 || $VERSION_ID == 26.04 ) ]] || die 'Prototype supports Ubuntu 24.04/26.04 only.'
-[[ ! -e /var/lib/glacier2 ]] || die 'Existing /var/lib/glacier2: refusing to replace or regenerate keys. See recovery guide.'
-[[ ! -e /etc/glacier2 && ! -e /opt/glacier2 ]] || die 'Existing Glacier installation detected; inspect it first.'
-for path in /var/lib/glacier2 /etc/glacier2 /opt/glacier2 /etc/modprobe.d/glacier2.conf /etc/default/grub.d/99-glacier2.cfg /etc/udev/rules.d/99-glacier2.rules /etc/systemd/system/glacier2-airgap.service; do
-    [[ ! -e $path && ! -L $path ]] || die "Existing state/configuration: $path"
-done
-need flock
-exec 9>/run/lock/glacier2.lock
-flock -n 9 || die 'Another Glacier runner is active.'
-CHAIN=${GLACIER_CHAIN:-main}
-[[ $CHAIN == regtest || $CHAIN == signet || $CHAIN == main ]] || die 'GLACIER_CHAIN must be regtest, signet or main.'
-DRIVE=${GLACIER_DRIVE:-/dev/sr0}
-if [[ $SKIP_CD == 0 ]]; then
-    [[ $DRIVE =~ ^/dev/sr[0-9]+$ && -b $DRIVE ]] || die 'Set GLACIER_DRIVE to an optical block device, for example /dev/sr0.'
-fi
-log "Applying persistent network isolation and creating seven unencrypted $CHAIN signers. No setup confirmations. Prototype: no meaningful funds until recovery/spend tests pass."
-if [[ $SKIP_CD == 1 ]]; then log 'TEST FLAG: real hardening and wallet creation; no CD backups. Not a dry run.'; fi
-STATE=/var/lib/glacier2
-DATA=$STATE/core-data
-CORE=/opt/glacier2/core
+
+echo '0255103718033e6aee15fa944717fc277e047b845bff1e7408af0ea732d8d0c1  bitcoin-core.tar.gz' | sha256sum -c - >/dev/null || die 'Bad Bitcoin Core checksum.'
+swapoff -a
+airgap
 mkdir -m 700 "$STATE"
-trap cleanup EXIT
-trap 'log "Failure at line $LINENO (command suppressed to avoid secret disclosure)."' ERR
-printf '%s\n' "$CHAIN" >"$STATE/chain"
-printf '%s\n' "$ROOT" >"$STATE/source-location"
-printf '%s\n' "$SKIP_CD" >"$STATE/skip-cd"
-for module in "${MODULES[@]}"; do
-    log "Starting module: $module"
-    # shellcheck source=/dev/null
-    source "$ROOT/modules/$module.sh"
-    "$module"
-    printf '%s\n' "$(date -u +%FT%TZ)" >"$STATE/$module.complete"
-    log "Completed module: $module"
-done
-if [[ $SKIP_CD == 1 ]]; then
-    log 'Setup finished; CDs deliberately skipped. No recovery media exists. Keep offline; do not fund this test setup.'
-else
-    log 'Seven discs verified. Keep the machine offline. Follow RECOVERY.md before trusting this wallet.'
-fi
+install_core
+[[ $MODE == spend ]] && { trap - EXIT; echo "Bitcoin Core is running from $CORE/bin."; exit; }
+make_wallet
+burn_cds
+rpc stop
+trap - EXIT
+echo 'Done. Keep the machine offline.'
