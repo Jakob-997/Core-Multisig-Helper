@@ -105,10 +105,9 @@ Do this while the discs are still blank. Once generation starts, use the pre-lab
 
 Insert USB 2, connect the optical writer, and have the pre-labeled discs ready.
 
-Open a terminal and enter the project directory:
+Open a terminal, navigate to the Core Multisig Helper project directory, then run:
 
 ```bash
-cd /path/to/Core-Multisig-Helper
 sudo ./setup.sh
 ```
 
@@ -174,10 +173,9 @@ Whichever online wallet you use, follow these rules:
 
 Create the PSBT online and save it to **USB 2**.
 
-Boot a **fresh Ubuntu Live session**, insert USB 2, enter the project directory and run:
+Boot a **fresh Ubuntu Live session**, insert USB 2, navigate to the Core Multisig Helper project directory, then run:
 
 ```bash
-cd /path/to/Core-Multisig-Helper
 sudo ./setup.sh
 ```
 
