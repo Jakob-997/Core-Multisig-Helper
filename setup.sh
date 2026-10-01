@@ -15,13 +15,31 @@ node(){ local m=$1; shift; printf '%s\n' "$@" | rpc -stdin "$m"; }
 wallet(){ local w=$1 m=$2; shift 2; printf '%s\n' "$@" | rpc -rpcwallet="$w" -stdin "$m"; }
 
 airgap(){
-    nft -f - <<'EOF'
+    cat >/etc/nftables.conf <<'EOF'
+flush ruleset
 table inet glacier2 {
  chain input { type filter hook input priority -300; policy drop; iifname "lo" accept; }
  chain output { type filter hook output priority -300; policy drop; oifname "lo" accept; }
 }
 EOF
+    cat >/etc/systemd/system/glacier-airgap.service <<'EOF'
+[Unit]
+Description=Glacier permanent airgap
+Before=network-pre.target
+DefaultDependencies=no
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'rfkill block all; for i in /sys/class/net/*; do n=${i##*/}; [ "$n" = lo ] || ip link set "$n" down; done'
+RemainAfterExit=yes
+[Install]
+WantedBy=network-pre.target
+EOF
+    systemctl mask --now NetworkManager.service systemd-networkd.service networking.service wpa_supplicant.service wpa_supplicant@.service iwd.service ModemManager.service 2>/dev/null || true
+    systemctl daemon-reload
+    systemctl enable glacier-airgap.service nftables.service
+    nft -f /etc/nftables.conf
     rfkill block all
+    for i in /sys/class/net/*; do [[ ${i##*/} == lo ]] || ip link set "${i##*/}" down; done
 }
 
 install_core(){
@@ -86,7 +104,7 @@ MN=${MN//-of-/-}; MN=${MN// of /-}; M=${MN%-*}; N=${MN#*-}
 [[ $M =~ ^[1-9][0-9]*$ && $N =~ ^[1-9][0-9]*$ && $M -le $N && $N -ge 2 && $N -le 20 ]] || die 'Enter m-n, for example 2-5.'
 [[ ! -e $STATE ]] || die 'Existing Glacier wallet.'
 [[ -b $DRIVE ]] || die "No optical drive: $DRIVE"
-for c in nft rfkill xorriso eject jq; do command -v "$c" >/dev/null || die "Missing $c."; done
+for c in nft rfkill ip systemctl xorriso eject jq; do command -v "$c" >/dev/null || die "Missing $c."; done
 
 airgap
 mkdir -m 700 "$STATE"
