@@ -26,7 +26,7 @@ EOF
     systemctl stop NetworkManager.service wpa_supplicant.service ModemManager.service systemd-networkd.service 2>/dev/null || true
     rfkill block all 2>/dev/null || true
     for i in /sys/class/net/*; do n=${i##*/}; [ "$n" = lo ] || ip link set "$n" down 2>/dev/null || true; done
-    echo 'AIRGAP ACTIVE — networking disabled before key generation.'
+    [[ $MODE == generate ]] && echo 'AIRGAP ACTIVE — networking disabled before key generation.' || echo 'AIRGAP ACTIVE — networking disabled before signer wallet loading.'
 }
 
 install_core(){
