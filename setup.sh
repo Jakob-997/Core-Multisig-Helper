@@ -101,7 +101,7 @@ burn_cds(){
 
 read -rp 'Generate keys or spend? [generate]: ' MODE </dev/tty; MODE=${MODE:-generate}
 [[ $MODE == generate || $MODE == spend ]] || die 'Enter generate or spend.'
-[[ ! -e $STATE ]] || die 'Existing Glacier state.'
+[[ ! -e $STATE ]] || { [[ $MODE == generate ]] || die 'Existing Glacier state.'; rpc getblockchaininfo >/dev/null 2>&1 && die 'A Glacier wallet is still running. Finish it or reboot before generating another.'; read -rp 'WARNING: A previous Glacier wallet was detected. Type NEW to permanently delete it and create a completely new wallet. Old CDs/backups belong to the old wallet and MUST NOT be mixed with the new one: ' RESET </dev/tty; [[ $RESET == NEW ]] || die 'Canceled.'; rm -rf -- "$STATE"; }
 for c in nft rfkill ip swapoff sha256sum; do command -v "$c" >/dev/null || die "Missing $c."; done
 
 if [[ $MODE == generate ]]; then
