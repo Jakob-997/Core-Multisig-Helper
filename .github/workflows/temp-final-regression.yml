@@ -26,7 +26,7 @@ jobs:
           mkdir -p "$C" "$D"
           tar -xzf bitcoin-core.tar.gz --strip-components=1 -C "$C"
           "$C/bin/bitcoin-cli" -version
-          "$C/bin/bitcoin-qt" -version
+          QT_QPA_PLATFORM=minimal "$C/bin/bitcoin-qt" -version
 
           "$C/bin/bitcoind" -regtest -datadir="$D" -daemonwait -networkactive=0 -listen=0 -fallbackfee=0.0002 -rpcport=18459
           rpc(){ "$C/bin/bitcoin-cli" -regtest -datadir="$D" -rpcport=18459 "$@"; }
@@ -93,23 +93,27 @@ jobs:
           rpc -rpcwallet=signer_1 backupwallet "$T/signer.dat"
 
           mkdir "$T/watchstage"
-          cp "$T/descriptors.txt" "$T/watchstage/"
+          cp "$T/descriptors.txt" setup.sh bitcoin-core.tar.gz "$T/watchstage/"
           cp "$T/watch_only.dat" "$T/watchstage/"
           xorriso -as mkisofs -quiet -r -J -o "$T/watch.iso" "$T/watchstage"
           mkdir "$T/watchout"
           xorriso -osirrox on -indev "$T/watch.iso" -extract / "$T/watchout" >/dev/null 2>&1
           test -f "$T/watchout/watch_only.dat"
           test -f "$T/watchout/descriptors.txt"
+          test -f "$T/watchout/setup.sh"
+          test -f "$T/watchout/bitcoin-core.tar.gz"
           test ! -e "$T/watchout/wallet.dat"
 
           mkdir "$T/signstage"
-          cp "$T/descriptors.txt" "$T/signstage/"
+          cp "$T/descriptors.txt" setup.sh bitcoin-core.tar.gz "$T/signstage/"
           cp "$T/signer.dat" "$T/signstage/wallet.dat"
           xorriso -as mkisofs -quiet -r -J -o "$T/signer.iso" "$T/signstage"
           mkdir "$T/signout"
           xorriso -osirrox on -indev "$T/signer.iso" -extract / "$T/signout" >/dev/null 2>&1
           test -f "$T/signout/wallet.dat"
           test -f "$T/signout/descriptors.txt"
+          test -f "$T/signout/setup.sh"
+          test -f "$T/signout/bitcoin-core.tar.gz"
           test ! -e "$T/signout/watch_only.dat"
 
           rpc unloadwallet watch_only >/dev/null
