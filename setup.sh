@@ -39,11 +39,11 @@ install_core(){
 
 spend_wallet(){
     local src dir desc commas gui_user
-    local -a wallets
     read -rp 'Insert and mount ONE signer backup disc, then press Enter: ' </dev/tty
-    mapfile -t wallets < <(find /media /run/media /mnt -type f -name wallet.dat 2>/dev/null)
-    (( ${#wallets[@]} == 1 )) || die "Expected exactly one mounted signer wallet.dat; found ${#wallets[@]}."
-    src=${wallets[0]}; dir=${src%/*}
+    dir=$(findmnt -nr -S "$DRIVE" -o TARGET | head -n1)
+    [[ -n $dir ]] || die "Signer disc in $DRIVE is not mounted."
+    src=$dir/wallet.dat
+    [[ -f $src ]] || die 'Signer backup is missing wallet.dat.'
     [[ -f $dir/descriptors.txt ]] || die 'Signer backup is missing descriptors.txt.'
     desc=$(<"$dir/descriptors.txt")
     [[ $desc =~ sortedmulti\(([0-9]+), ]] || die 'Could not read multisig policy.'
@@ -84,14 +84,14 @@ make_wallet(){
     echo "$raw#$checksum" >"$STATE/descriptors.txt"
     node createwallet watch_only true true >/dev/null
     request=$(jq -cn --arg desc "$raw#$checksum" '[{desc:$desc,active:true,timestamp:"now",range:[0,999]}]')
-    wallet watch_only importdescriptors "$request" >/dev/null
+    wallet watch_only importdescriptors "$request" | jq -e '.[0].success == true' >/dev/null || die 'Failed to import WATCH ONLY descriptor.'
     [[ $(rpc -rpcwallet=watch_only getwalletinfo | jq -r .private_keys_enabled) == false ]] || die 'WATCH ONLY contains private keys.'
 
     for ((i=1;i<=N;i++)); do
         private="${raw/${xpub[i]}/${xprv[i]}}"
         checksum=$(node getdescriptorinfo "$private" | jq -r .checksum)
         request=$(jq -cn --arg desc "$private#$checksum" '[{desc:$desc,active:true,timestamp:"now",range:[0,999]}]')
-        wallet "signer_$i" importdescriptors "$request" >/dev/null
+        wallet "signer_$i" importdescriptors "$request" | jq -e '.[0].success == true' >/dev/null || die "Failed to import signer $i descriptor."
     done
 }
 
@@ -102,12 +102,12 @@ burn_cds(){
     rpc -rpcwallet=watch_only backupwallet "$STATE/cd/watch_only.dat"
     iso=$STATE/watch_only.iso
     xorriso -as mkisofs -quiet -r -J -o "$iso" "$STATE/cd"
-    read -rp "Insert blank CD-R for WATCH ONLY, then press Enter: " </dev/tty
+    read -rp "Insert pre-labeled blank CD-R for WATCH ONLY, then press Enter: " </dev/tty
     xorriso -as cdrecord -v dev="$DRIVE" -dao "$iso"
     eject "$DRIVE"
     read -rp "Reinsert WATCH ONLY, then press Enter: " </dev/tty
     sectors=$(( $(stat -c %s "$iso") / 2048 ))
-    cmp "$iso" <(dd if="$DRIVE" bs=2048 count="$sectors" status=none)
+    cmp "$iso" <(dd if="$DRIVE" bs=2048 count="$sectors" status=none) || die 'WATCH ONLY disc verification failed.'
     eject "$DRIVE"
     echo "WATCH ONLY verified. Use this disc on the online computer."
     rm "$STATE/cd/watch_only.dat"
@@ -116,12 +116,12 @@ burn_cds(){
         rpc -rpcwallet="signer_$i" backupwallet "$STATE/cd/wallet.dat"
         iso=$STATE/signer_$i.iso
         xorriso -as mkisofs -quiet -r -J -o "$iso" "$STATE/cd"
-        read -rp "Insert blank CD-R for signer $i, then press Enter: " </dev/tty
+        read -rp "Insert pre-labeled blank CD-R for signer $i, then press Enter: " </dev/tty
         xorriso -as cdrecord -v dev="$DRIVE" -dao "$iso"
         eject "$DRIVE"
         read -rp "Reinsert signer $i, then press Enter: " </dev/tty
         sectors=$(( $(stat -c %s "$iso") / 2048 ))
-        cmp "$iso" <(dd if="$DRIVE" bs=2048 count="$sectors" status=none)
+        cmp "$iso" <(dd if="$DRIVE" bs=2048 count="$sectors" status=none) || die "Signer $i disc verification failed."
         eject "$DRIVE"
         echo "Signer $i verified. Label and store it separately."
     done
@@ -131,6 +131,7 @@ echo 'CORE MULTISIG HELPER'
 read -rp 'Select mode: generate or spend: ' MODE </dev/tty
 [[ $MODE == generate || $MODE == spend ]] || die 'Enter exactly: generate or spend.'
 [[ ! -e $STATE ]] || { [[ $MODE == generate ]] || die 'Existing Core Multisig Helper state. If you just generated a wallet, reboot into a fresh Ubuntu Live session before spending; spend mode is intentionally fresh-session only.'; rpc getblockchaininfo >/dev/null 2>&1 && die 'A Core Multisig Helper wallet is still running. Finish it or reboot before generating another.'; read -rp 'WARNING: A previous Core Multisig Helper wallet was detected. Type NEW to permanently delete it and create a completely new wallet. Old CDs/backups belong to the old wallet and MUST NOT be mixed with the new one: ' RESET </dev/tty; [[ $RESET == NEW ]] || die 'Canceled.'; rm -rf -- "$STATE"; }
+[[ $(uname -m) == x86_64 ]] || die 'Requires an x86-64 (amd64) computer.'
 for c in nft rfkill ip systemctl swapoff sha256sum findmnt; do command -v "$c" >/dev/null || die "Missing $c."; done
 
 if [[ $MODE == generate ]]; then
@@ -152,4 +153,4 @@ make_wallet
 burn_cds
 rpc stop
 trap - EXIT
-echo 'Done. Keep the machine offline.'
+echo 'Done. All backups verified. Power off the computer.'
