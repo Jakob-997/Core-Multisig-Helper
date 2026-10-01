@@ -157,11 +157,17 @@ When generation is finished, **power the live computer off**.
 
 ## 5. Online wallet
 
-Use the WATCH ONLY wallet to monitor the wallet, create PSBTs and broadcast completed transactions.
+Treat the **online computer as untrusted**. Its job is to monitor the wallet, construct PSBTs and broadcast transactions—not to tell you what is safe to sign.
 
-**Preferred:** your own Bitcoin Core node, optionally over Tor.
+**Preferred:** your own Bitcoin Core node, optionally over Tor. This keeps the online wallet stack centered on Bitcoin Core.
 
-**Alternative:** Sparrow can create compatible PSBTs and can connect to your own node or a public Electrum server. If using a public server, Tor is recommended. A public Electrum server adds privacy and data-trust assumptions, so verify the transaction carefully on the offline signer before signing.
+**Alternative:** Sparrow is convenient if you mainly want to view the wallet and construct PSBTs without running your own fully synced node. It can connect to your own node or a public Electrum server; use Tor with a public server. Sparrow adds another wallet codebase and review surface, so a bad or compromised change has another opportunity to mislead the online view.
+
+Whichever online wallet you use, follow these rules:
+
+- **Never trust an online-generated receive address by itself.** Before sending funds, verify that exact address independently on a fresh offline Ubuntu session using one of your signer discs, or an authentic offline copy of your WATCH ONLY wallet/descriptor.
+- **Before signing a spend, verify the destination, amount, fee and every change output on the offline signer.** Confirm that each change output belongs to your multisig wallet.
+- Assume the online computer may be lying to you. The offline live-booted environment, using your authentic signer backup or independently verified public descriptor, is the checkpoint that decides whether the transaction is correct.
 
 ## 6. Sign a PSBT
 
@@ -185,10 +191,11 @@ The script airgaps the machine, then asks for **one signer disc**. It copies tha
 In Core:
 
 1. Load the PSBT from USB 2.
-2. Verify the destination, amount and fee.
-3. Sign.
-4. Save the partially signed PSBT back to USB 2.
-5. Close Core and power the computer off.
+2. Verify the destination, amount, fee and **all change outputs**.
+3. Confirm every change output belongs to your multisig wallet.
+4. Sign.
+5. Save the partially signed PSBT back to USB 2.
+6. Close Core and power the computer off.
 
 Boot another fresh live session and repeat with a different signer disc until **M different signers** have signed.
 
