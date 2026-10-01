@@ -22,10 +22,10 @@ jobs:
           mkdir -p "$C" "$DATA"
           tar -xzf bitcoin-core.tar.gz --strip-components=1 -C "$C"
           "$C/bin/bitcoind" -regtest -datadir="$DATA" -daemonwait -networkactive=0 -listen=0 -rpcport=18459
-          trap '"'"$C/bin/bitcoin-cli"'"' -regtest -datadir='"'"$DATA"'"' -rpcport=18459 stop >/dev/null 2>&1 || true' EXIT
           rpc(){ "$C/bin/bitcoin-cli" -regtest -datadir="$DATA" -rpcport=18459 "$@"; }
           node(){ local m=$1; shift; printf '%s\n' "$@" | rpc -stdin "$m"; }
           wallet(){ local w=$1 m=$2; shift 2; printf '%s\n' "$@" | rpc -rpcwallet="$w" -stdin "$m"; }
+          trap 'rpc stop >/dev/null 2>&1 || true' EXIT
 
           declare -a origin xpub xprv
           for i in 1 2 3; do
