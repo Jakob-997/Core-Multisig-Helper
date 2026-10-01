@@ -71,7 +71,7 @@ There are no seed words to transcribe.
 - A **64-bit x86-64 capable laptop or desktop**. A laptop is the expected setup; if you want a physical airgap, prefer one with removable Wi-Fi/Bluetooth hardware.
 - Two USB drives:
   - **USB 1:** verified Ubuntu 26.04.1 x86-64 Desktop Live.
-  - **USB 2:** the verified Core Multisig Helper release during setup; after generation, use it only for PSBT transfer.
+  - **USB 2:** the verified Core Multisig Helper release and, later, PSBT transfer.
 - A CD/DVD writer/reader available as `/dev/sr0`.
 - **N + 1 blank CD-Rs**.
 - A permanent marker.
@@ -140,8 +140,6 @@ The script first writes the **WATCH ONLY** disc:
 ```text
 watch_only.dat
 descriptors.txt
-setup.sh
-bitcoin-core.tar.gz
 ```
 
 It then writes one private signer disc for each signer:
@@ -149,11 +147,7 @@ It then writes one private signer disc for each signer:
 ```text
 wallet.dat
 descriptors.txt
-setup.sh
-bitcoin-core.tar.gz
 ```
-
-The helper and frozen Core archive are copied onto every disc so future offline sessions can run the exact immutable software used to create the wallet. After generation, do **not** rely on the copy of the helper on USB 2 after that USB has touched an online computer.
 
 Every disc is ejected, reinserted, and byte-compared against the ISO that was written. Do not treat a backup as complete until the script reports it verified.
 
@@ -171,7 +165,7 @@ Treat the **online computer as untrusted**. Its job is to monitor the wallet, co
 
 Whichever online wallet you use, follow these rules:
 
-- **Never trust an online-generated receive address by itself.** To receive funds, boot a fresh offline Ubuntu session, run `spend` from one of your signer CDs, and use or verify the address shown by that offline signer.
+- **Never trust an online-generated receive address by itself.** To receive funds, boot a fresh offline Ubuntu session, load one of your authentic signer CDs in `spend` mode, and use or verify the address shown by that offline signer.
 - **Before signing a spend, verify the destination, amount, fee and every change output on the offline signer.** Confirm that each change output belongs to your multisig wallet.
 - Assume the online computer may be lying to you. **Only trust addresses derived and displayed by the fresh live-booted offline laptop with one of your authentic Core Multisig Helper discs loaded.** Do not treat an address shown only by the online wallet as authoritative.
 
@@ -179,13 +173,13 @@ Whichever online wallet you use, follow these rules:
 
 Create the PSBT online and save it to **USB 2**.
 
-Boot a **fresh Ubuntu Live session** and insert USB 2 containing the PSBT. Insert the signer CD you want to use, navigate to the mounted signer CD, then run the helper **from the CD**:
+Boot a **fresh Ubuntu Live session** and insert USB 2 containing Core Multisig Helper and the PSBT. Navigate to the Core Multisig Helper project directory and run:
 
 ```bash
 sudo bash setup.sh
 ```
 
-This keeps the executable helper and Bitcoin Core on immutable signer media; USB 2 is treated as untrusted transfer media.
+Choose `spend`, then insert the signer CD when prompted.
 
 Choose:
 
