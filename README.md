@@ -57,9 +57,11 @@ During initial generation, all N signer keys coexist on the one offline generati
 
 ### Tradeoffs and future direction
 
-This is not intended to be the final or only way to build secure Bitcoin custody. There are approaches with attractive tradeoffs that may ultimately be preferable for some users.
+This is not intended to be the final or only way to build secure Bitcoin custody. I started here mainly because there is value in having a very small, understandable Bitcoin Core-based alternative to more complicated and error-prone manual multisig guides and projects with a larger custom trust surface.
 
-For a more **checking-account-like** setup, threshold secret-sharing approaches such as Shamir/SLIP-39 may offer a cleaner backup model than maintaining multiple independent signer wallets. The reason this project uses Bitcoin Core multisig today is practical: it is working now, the helper code is extremely small, and the security-critical logic stays close to Bitcoin Core. I would rather wait for newer alternatives and surrounding tooling to receive more review before depending on them for meaningful funds.
+For a more **checking-account-like** setup, a threshold secret-sharing design such as Codex32 may ultimately be a better fit. It can avoid the multisig descriptor privacy tradeoff described above: you would not need every backup to carry all cosigner xpubs and therefore the information needed to derive the wallet's addresses. That is an attractive design, and I may implement a Codex32-based version or guide soon. The tradeoff is that it is more complex to implement correctly and, in the form I would rely on here, has less real-world review and deployment history than the Bitcoin Core multisig path used by this project today.
+
+So the current project is intentionally conservative: use the smallest practical amount of glue code around Bitcoin Core and provide a working alternative to custody instructions that require more manual descriptor assembly, more opportunities for operator error, or more custom wallet logic.
 
 For deeper **cold-storage** setups, timelock-based designs such as Liana are also compelling, especially when combined with a carefully chosen cosigner or recovery path. That is a different and less conventional model, and deserves its own guides, threat model, and review rather than being bolted onto this project.
 
