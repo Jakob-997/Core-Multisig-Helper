@@ -24,9 +24,13 @@ For example, `3-7` means any 3 of the 7 signer backups are required to spend.
 
 ### Spend
 
-Glacier can also be started in spend mode.
+Spend mode is designed for one signer per fresh Ubuntu Live session.
 
-Spend mode airgaps the live computer and makes the bundled Bitcoin Core available for signing transactions with your signer backups.
+Glacier airgaps the computer before loading any signer backup, asks you to insert and mount exactly one signer disc, copies its `wallet.dat` into RAM, reads the public descriptor to detect the wallet's `M-of-N` policy, and launches the bundled Bitcoin Core GUI with that RAM copy.
+
+For example, a 3-of-7 wallet tells you that 3 different signer backups out of 7 total are required. Sign the PSBT in Bitcoin Core, save the partially signed PSBT to your transfer USB, close Core, power off, boot a fresh Ubuntu Live session, and repeat with a different signer disc until the required number of signers have signed. Then take the completed transaction online and broadcast it from your node.
+
+The signer backup media is never used as Core's working wallet; Glacier copies it into `/dev/shm` first so the backup remains untouched.
 
 ## How to use it
 
