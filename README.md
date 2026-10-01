@@ -25,14 +25,14 @@ The script:
 Use a clean x86-64 Ubuntu 24.04/26.04 installation.
 
 Before running Glacier, while still online, make sure these packages are installed:
-`git`, `jq`, `nftables`, `rfkill`, `xorriso`, and `eject`.
+`git`, `jq`, `nftables`, `rfkill`, `iproute2`, `xorriso`, and `eject`.
 
 For real use, download a specific Glacier release and verify it before running it.
 
 For testing, run:
 
 ```bash
-sudo apt install -y git jq nftables rfkill xorriso eject && git clone --depth 1 --branch simplify-auditability https://github.com/Jakob-997/Glacier-2.git && cd Glacier-2 && sudo ./setup.sh
+sudo apt install -y git jq nftables rfkill iproute2 xorriso eject && git clone --depth 1 --branch simplify-auditability https://github.com/Jakob-997/Glacier-2.git && cd Glacier-2 && sudo ./setup.sh
 ```
 
 Connect the optical writer at `/dev/sr0`, have one blank CD-R per signer ready,
@@ -54,12 +54,14 @@ Press Enter for the default 3-7, or type another policy such as `2-5`, `2-of-5`,
 
 For example, **3-7 means any 3 signers are required to spend from a wallet made from 7 independent signer keys.**
 
-Glacier's software airgap blocks all network traffic except local loopback traffic,
-and `rfkill` blocks radios. Bitcoin Core is also started with networking disabled.
+Glacier installs a persistent software airgap. It blocks all non-loopback network
+traffic with nftables, masks the normal Ubuntu network managers, blocks radios,
+and forces non-loopback interfaces down at boot. Bitcoin Core is also started
+with networking disabled.
 
-This airgap applies to the current boot; it is not a permanent OS modification.
-Do not reconnect the machine, and physically unplug Ethernet and disable/remove
-radios where practical.
+The airgap survives reboot. Accidentally plugging in Ethernet or turning Wi-Fi
+back on should not restore networking. Re-enabling networking requires deliberate
+root-level changes to undo the Glacier airgap.
 
 ## Each CD
 
