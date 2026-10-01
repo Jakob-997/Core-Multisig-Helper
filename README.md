@@ -23,7 +23,7 @@ For an `M-of-N` wallet:
 - `M` is the number of different signer backups required to spend.
 - `N` is the total number of private signer backups.
 - Core Multisig Helper creates **N private signer discs + 1 public WATCH ONLY disc**.
-- Example: `2-4` requires 2 signers out of 4 and uses **8 discs total**.
+- Example: `2-4` requires 2 signers out of 4 and uses **5 discs total**.
 
 Private keys are generated only after the machine has been airgapped. Swap is disabled and all working wallet state is kept under RAM-backed `/dev/shm`. Each signer should later be used in a **fresh Ubuntu Live session**.
 
