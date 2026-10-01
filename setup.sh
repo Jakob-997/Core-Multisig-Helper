@@ -4,7 +4,7 @@ set +x
 umask 077
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
-STATE=/dev/shm/glacier2
+STATE=/dev/shm/core-multisig-helper
 CORE=$STATE/core
 DATA=$STATE/data
 DRIVE=/dev/sr0
@@ -57,7 +57,7 @@ spend_wallet(){
     echo "Sign the PSBT in Bitcoin Core and save the partially signed PSBT to your transfer USB."
     echo "Then close Core, power off, boot a fresh Ubuntu Live session, and repeat with a different signer disc until $M signers have signed."
     echo "After $M different signers have signed, take the completed transaction online and broadcast it from your node."
-    sudo -u "$gui_user" "$CORE/bin/bitcoin-qt" -datadir="$DATA" -walletdir="$DATA/wallets" -networkactive=0 -listen=0 -wallet=signer
+    sudo -H -u "$gui_user" env XDG_RUNTIME_DIR="/run/user/$(id -u "$gui_user")" "$CORE/bin/bitcoin-qt" -datadir="$DATA" -walletdir="$DATA/wallets" -networkactive=0 -listen=0 -wallet=signer
     echo 'Bitcoin Core closed. Power off before using another signer.'
 }
 
@@ -127,10 +127,11 @@ burn_cds(){
     done
 }
 
+echo 'CORE MULTISIG HELPER'
 read -rp 'Select mode: generate or spend: ' MODE </dev/tty
 [[ $MODE == generate || $MODE == spend ]] || die 'Enter exactly: generate or spend.'
 [[ ! -e $STATE ]] || { [[ $MODE == generate ]] || die 'Existing Glacier state. If you just generated a wallet, reboot into a fresh Ubuntu Live session before spending; spend mode is intentionally fresh-session only.'; rpc getblockchaininfo >/dev/null 2>&1 && die 'A Glacier wallet is still running. Finish it or reboot before generating another.'; read -rp 'WARNING: A previous Glacier wallet was detected. Type NEW to permanently delete it and create a completely new wallet. Old CDs/backups belong to the old wallet and MUST NOT be mixed with the new one: ' RESET </dev/tty; [[ $RESET == NEW ]] || die 'Canceled.'; rm -rf -- "$STATE"; }
-for c in nft rfkill ip systemctl swapoff sha256sum; do command -v "$c" >/dev/null || die "Missing $c."; done
+for c in nft rfkill ip systemctl swapoff sha256sum findmnt; do command -v "$c" >/dev/null || die "Missing $c."; done
 
 if [[ $MODE == generate ]]; then
     read -rp 'Enter multisig policy in m-n format (for example 3-7): ' MN </dev/tty
@@ -141,6 +142,7 @@ if [[ $MODE == generate ]]; then
 fi
 
 echo '0255103718033e6aee15fa944717fc277e047b845bff1e7408af0ea732d8d0c1  bitcoin-core.tar.gz' | sha256sum -c - >/dev/null || die 'Bad Bitcoin Core checksum.'
+[[ $(findmnt -n -o FSTYPE /dev/shm) == tmpfs ]] || die '/dev/shm is not RAM-backed tmpfs.'
 swapoff -a
 airgap
 mkdir -m 700 "$STATE"
