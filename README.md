@@ -1,38 +1,26 @@
 # Glacier-2
 
-A deliberately small 3-of-7 Bitcoin cold-storage setup built around a frozen
-Bitcoin Core release.
+Minimal 3-of-7 Bitcoin cold storage.
 
 Glacier-2 does four things:
 
-1. installs the bundled Bitcoin Core binary;
-2. disables networking and installs a persistent software airgap;
-3. creates seven independent Bitcoin Core signer wallets under one 3-of-7
-   `wsh(sortedmulti(...))` policy;
-4. burns one signer wallet to each of seven CD-Rs and reads every disc back.
+1. installs the frozen Bitcoin Core build in this repository;
+2. disables networking;
+3. creates seven signer wallets for one 3-of-7 descriptor policy;
+4. burns and verifies one signer per CD-R.
 
-That is the whole project.
-
-> **Prototype:** do not use meaningful funds until you have completed the recovery
-> test in [RECOVERY.md](RECOVERY.md).
+> Experimental. Complete a recovery test before using meaningful funds.
 
 ## Requirements
 
 - x86-64 PC
-- Ubuntu Desktop 24.04 or 26.04
-- clean/disposable installation
+- clean Ubuntu 24.04 or 26.04 install
 - CD/DVD writer
-- seven new blank CD-Rs
-- Internet access only while Ubuntu installs the required packages
+- seven blank CD-Rs
 
-Use full-disk encryption during Ubuntu installation if you want the laptop protected
-at rest. Physically unplug Ethernet and remove or disable Wi-Fi/Bluetooth/radio
-hardware where practical; software isolation cannot protect against a compromised
-kernel, root account, or firmware.
+Physically unplug Ethernet and disable/remove radios where practical.
 
 ## Run
-
-On the clean Ubuntu installation:
 
 ```bash
 sudo apt update
@@ -42,30 +30,15 @@ cd Glacier-2
 sudo ./setup.sh
 ```
 
-The script installs dependencies before cutting networking. After the airgap is
-applied, do not reconnect the machine.
+After the airgap is applied, never reconnect the machine.
 
-The program will ask for Signer 1 through Signer 7 in order. Each disc is burned,
-ejected, reinserted, and compared byte-for-byte with the ISO that was written.
-
-For development only:
+If your optical drive is not `/dev/sr0`:
 
 ```bash
-sudo ./setup.sh --test
+sudo env GLACIER_DRIVE=/dev/sr1 ./setup.sh
 ```
 
-`--test` performs the real airgap and creates real keys but skips CD burning.
-Do not fund that installation.
-
-Regtest can be selected with:
-
-```bash
-sudo env GLACIER_CHAIN=regtest ./setup.sh --test
-```
-
-## What is on each CD
-
-Each signer disc contains only:
+## Each CD contains
 
 ```text
 wallet.dat
@@ -75,51 +48,25 @@ DISC.txt
 SHA256SUMS
 ```
 
-`wallet.dat` is private and unencrypted. Keep the seven discs physically separate.
+`wallet.dat` is private and unencrypted. Store the seven discs separately.
+
 Any three different signer wallets can satisfy the policy.
 
-`descriptors.txt` contains the complete public receive/change policy. It cannot
-spend coins, but it reveals the wallet structure and derived addresses.
+## Trust model
 
-## Bitcoin Core trust model
-
-Bitcoin Core 32.0rc2 for x86-64 Linux is frozen directly in this repository at:
+Bitcoin Core 32.0rc2 for x86-64 Linux is frozen in:
 
 ```text
 vendor/bitcoin-32.0rc2-x86_64-linux-gnu.tar.gz
 ```
 
-Glacier does not download or re-authenticate Core during setup. Trusting a reviewed
-Glacier commit includes trusting the Core archive in that commit.
-
-The upstream SHA256 for the bundled archive is:
+Trusting a reviewed Glacier commit includes trusting that binary. Its upstream
+SHA256 is:
 
 ```text
 0255103718033e6aee15fa944717fc277e047b845bff1e7408af0ea732d8d0c1
 ```
 
-Before replacing Core, verify the new release against Bitcoin Core's official
-release material and reproducible-build attestations, then review and test the new
-Glacier revision.
+The production code is just `setup.sh` and `wallets.py`.
 
-## Files worth reviewing
-
-The production implementation is intentionally just:
-
-```text
-setup.sh
-wallets.py
-```
-
-`setup.sh` installs Core, applies the airgap, runs wallet creation, and burns the
-discs. `wallets.py` constructs the seven signers and 3-of-7 descriptors using
-Bitcoin Core RPC.
-
-[RECOVERY.md](RECOVERY.md) is copied onto every disc.
-
-## Limitations
-
-All seven keys are generated on one machine, so a compromise during generation can
-compromise the whole wallet. The software airgap is defense in depth, not a physical
-airgap. Glacier does not provide secure erase, independent hardware signers, or a
-formal security audit.
+See [RECOVERY.md](RECOVERY.md) before using the wallet.
