@@ -70,6 +70,7 @@ make_wallet(){
     node createwallet watch_only true true >/dev/null
     request="[{"desc":"$raw#$checksum","active":true,"timestamp":"now","range":[0,999]}]"
     wallet watch_only importdescriptors "$request" >/dev/null
+    [[ $(rpc -rpcwallet=watch_only getwalletinfo | jq -r .private_keys_enabled) == false ]] || die 'WATCH ONLY contains private keys.'
 
     for ((i=1;i<=N;i++)); do
         private="${raw/${xpub[i]}/${xprv[i]}}"
