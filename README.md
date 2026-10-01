@@ -84,9 +84,25 @@ Download and verify a Core Multisig Helper release, extract it, and copy the ext
 
 Boot Ubuntu from USB 1 and use the live environment. **Do not install Ubuntu.**
 
-## 2. Generate the wallet
+## 2. Label the discs
 
-Insert USB 2, connect the optical writer, and have the blank discs ready.
+Choose your M-of-N policy **before** generating the wallet, then label every blank disc before inserting any of them into the writer.
+
+For a 2-of-4 wallet, prepare and label 5 discs:
+
+```text
+WATCH ONLY — 2-OF-4 — PUBLIC
+SIGNER 1 OF 4 — 2-OF-4 — PRIVATE
+SIGNER 2 OF 4 — 2-OF-4 — PRIVATE
+SIGNER 3 OF 4 — 2-OF-4 — PRIVATE
+SIGNER 4 OF 4 — 2-OF-4 — PRIVATE
+```
+
+Do this while the discs are still blank. Once generation starts, use the pre-labeled discs exactly when the script asks for them.
+
+## 3. Generate the wallet
+
+Insert USB 2, connect the optical writer, and have the pre-labeled discs ready.
 
 Open a terminal and enter the project directory:
 
@@ -117,7 +133,7 @@ AIRGAP ACTIVE — networking disabled before key generation.
 
 It then creates the wallet in RAM.
 
-## 3. Burn the backups
+## 4. Burn the backups
 
 The script first writes the **WATCH ONLY** disc:
 
@@ -135,20 +151,11 @@ descriptors.txt
 
 Every disc is ejected, reinserted, and byte-compared against the ISO that was written. Do not treat a backup as complete until the script reports it verified.
 
-Label the discs immediately. For a 2-of-4 wallet:
-
-```text
-WATCH ONLY — 2-OF-4 — PUBLIC
-SIGNER 1 OF 4 — 2-OF-4 — PRIVATE
-SIGNER 2 OF 4 — 2-OF-4 — PRIVATE
-...
-```
-
-Store the private signer discs separately.
+The discs should already be labeled before generation. As each disc is written and verified, keep it with its matching label and store the private signer discs separately.
 
 When generation is finished, **power the live computer off**.
 
-## 4. Online wallet
+## 5. Online wallet
 
 Use the WATCH ONLY wallet to monitor the wallet, create PSBTs and broadcast completed transactions.
 
@@ -156,7 +163,7 @@ Use the WATCH ONLY wallet to monitor the wallet, create PSBTs and broadcast comp
 
 **Alternative:** Sparrow can create compatible PSBTs and can connect to your own node or a public Electrum server. If using a public server, Tor is recommended. A public Electrum server adds privacy and data-trust assumptions, so verify the transaction carefully on the offline signer before signing.
 
-## 5. Sign a PSBT
+## 6. Sign a PSBT
 
 Create the PSBT online and save it to **USB 2**.
 
