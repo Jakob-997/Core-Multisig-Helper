@@ -88,8 +88,8 @@ read -rp 'n [7]: ' N </dev/tty; N=${N:-7}
 [[ -b $DRIVE ]] || die "No optical drive: $DRIVE"
 command -v nft rfkill xorriso eject jq >/dev/null || die 'Install prerequisites first.'
 
-mkdir -m 700 "$STATE"
 airgap
+mkdir -m 700 "$STATE"
 install_core
 make_wallet
 burn_cds
