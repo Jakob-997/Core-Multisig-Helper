@@ -81,7 +81,7 @@ burn_cds(){
     done
 }
 
-read -rp 'Select m-of-n [3-of-7]: ' MN </dev/tty; MN=${MN:-3-7}
+read -rp 'Select m-n [default 3-7]: ' MN </dev/tty; MN=${MN:-3-7}
 MN=${MN//-of-/-}; MN=${MN// of /-}; M=${MN%-*}; N=${MN#*-}
 [[ $M =~ ^[1-9][0-9]*$ && $N =~ ^[1-9][0-9]*$ && $M -le $N && $N -ge 2 && $N -le 20 ]] || die 'Enter m-n, for example 2-5.'
 [[ ! -e $STATE ]] || die 'Existing Glacier wallet.'
