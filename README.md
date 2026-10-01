@@ -173,7 +173,7 @@ Whichever online wallet you use, follow these rules:
 
 Create the PSBT online and save it to **USB 2**.
 
-> **Security warning:** Ideally, use a separate or freshly prepared USB drive for PSBT transfer rather than the same USB that carries Core Multisig Helper. Any USB that has been connected to the online computer should be treated as untrusted transfer media.
+> **Security warning:** Understand that the PSBT USB transfers data between the online and offline computers. If that USB is compromised, it becomes a security risk to the offline signing environment. Treat transfer media as untrusted.
 
 Boot a **fresh Ubuntu Live session** and insert USB 2 containing Core Multisig Helper and the PSBT. Navigate to the Core Multisig Helper project directory and run:
 
