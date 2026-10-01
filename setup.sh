@@ -109,15 +109,12 @@ if [[ $MODE == generate ]]; then
     MN=${MN//-of-/-}; MN=${MN// of /-}; M=${MN%-*}; N=${MN#*-}
     [[ $M =~ ^[1-9][0-9]*$ && $N =~ ^[1-9][0-9]*$ && $M -le $N && $N -ge 2 && $N -le 20 ]] || die 'Enter m-n, for example 2-5.'
     [[ -b $DRIVE ]] || die "No optical drive: $DRIVE"
-    command -v dpkg >/dev/null || die 'Missing dpkg.'
-    sha256sum -c packages/SHA256SUMS >/dev/null || die 'Bad package checksum.'
+    for c in xorriso eject jq; do command -v "$c" >/dev/null || die "Missing $c."; done
 fi
 
 echo '0255103718033e6aee15fa944717fc277e047b845bff1e7408af0ea732d8d0c1  bitcoin-core.tar.gz' | sha256sum -c - >/dev/null || die 'Bad Bitcoin Core checksum.'
 swapoff -a
 airgap
-[[ $MODE == generate ]] && dpkg -i packages/*.deb >/dev/null
-[[ $MODE == generate ]] && for c in xorriso eject jq; do command -v "$c" >/dev/null || die "Missing $c."; done
 mkdir -m 700 "$STATE"
 install_core
 [[ $MODE == spend ]] && { trap - EXIT; echo "Bitcoin Core is running from $CORE/bin."; exit; }
