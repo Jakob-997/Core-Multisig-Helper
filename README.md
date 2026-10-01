@@ -25,7 +25,7 @@ In spend mode it only airgaps the system and makes the bundled Bitcoin Core avai
 
 ## Setup
 
-Use a clean x86-64 Ubuntu 24.04/26.04 installation.
+Use a clean x86-64 Ubuntu 26.04.1 live environment.
 
 Before running Glacier, while still online, make sure these packages are installed:
 `git`, `jq`, `nftables`, `rfkill`, `iproute2`, `xorriso`, and `eject`.
