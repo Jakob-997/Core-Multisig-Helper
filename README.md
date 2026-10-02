@@ -117,7 +117,7 @@ Everything below this point is the practical setup and spending procedure. Read 
   - **USB 1:** verified Ubuntu 26.04.1 x86-64 Desktop Live.
   - **USB 2:** the verified Core Multisig Helper release and, later, PSBT transfer.
 - A CD/DVD writer/reader available as `/dev/sr0`.
-- **N + 1 blank CD-Rs**.
+- **N + 1 blank CD-Rs**. For long-term storage, prefer **archival-grade gold CD-R media**, which is designed for greater durability and resistance to oxidation than ordinary CD-Rs.
 - A permanent marker.
 - An online Bitcoin wallet/node for creating PSBTs and broadcasting transactions.
 
