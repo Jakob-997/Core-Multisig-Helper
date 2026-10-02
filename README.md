@@ -254,6 +254,8 @@ Then return USB 2 to the online computer and broadcast the completed transaction
 
 The repository currently includes frozen Bitcoin Core **32.0rc2 x86-64 Linux**, a release-candidate build.
 
+Bitcoin Core is bundled directly with the project to make setup as simple and reproducible as possible, with no additional Core download required during use. I verified the bundled Bitcoin Core archive against the signatures and hashes published by Bitcoin Core maintainers. Anyone who wants to independently verify it can do the same before using the release.
+
 SHA256:
 
 ```text
