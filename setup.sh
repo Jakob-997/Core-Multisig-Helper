@@ -45,7 +45,7 @@ install_core(){
 }
 
 spend_wallet(){
-    local src dir desc commas gui_user launcher uid favorites
+    local src dir desc commas gui_user
     read -rp 'Ensure ONE signer backup disc is inserted and mounted, then press Enter: ' </dev/tty
     dir=$(findmnt -nr -S "$DRIVE" -o TARGET 2>/dev/null || true)
     [[ -n $dir ]] || die "Signer disc in $DRIVE is not mounted."
@@ -60,11 +60,10 @@ spend_wallet(){
     cp "$src" "$DATA/wallets/signer/wallet.dat"
     gui_user=${SUDO_USER:-}; [[ -n $gui_user && $gui_user != root ]] || die 'Run Core Multisig Helper with sudo from the Ubuntu desktop user.'
     chown -R "$gui_user:$(id -gn "$gui_user")" "$STATE"
-    uid=$(id -u "$gui_user"); launcher="/home/$gui_user/.local/share/applications/bitcoin-qt.desktop"; mkdir -p "$(dirname "$launcher")"
-    printf '[Desktop Entry]\nType=Application\nName=bitcoin-qt\nExec=%s/bin/bitcoin-qt -datadir=%s -walletdir=%s/wallets -networkactive=0 -listen=0 -wallet=signer\nIcon=%s/share/pixmaps/bitcoin256.png\nTerminal=false\n' "$CORE" "$DATA" "$DATA" "$CORE" >"$launcher"; chown -R "$gui_user:$(id -gn "$gui_user")" "/home/$gui_user/.local"
-    sudo -H -u "$gui_user" env XDG_RUNTIME_DIR="/run/user/$uid" DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" bash -c 'f=$(gsettings get org.gnome.shell favorite-apps); [[ $f == *"bitcoin-qt.desktop"* ]] || { [[ $f == "[]" ]] && f="[\"bitcoin-qt.desktop\"]" || f="${f%]} , \"bitcoin-qt.desktop\"]"; gsettings set org.gnome.shell favorite-apps "$f"; }' 2>/dev/null || true
+    cp "$CORE/bin/bitcoin-qt" "/home/$gui_user/bitcoin-qt"; chown "$gui_user:$(id -gn "$gui_user")" "/home/$gui_user/bitcoin-qt"; chmod 755 "/home/$gui_user/bitcoin-qt"
     echo "Wallet policy detected: $M-of-$N multisig. You need $M different signer backups out of $N total."
     echo 'Bitcoin Core will open with this signer wallet. Use it to verify receive addresses or sign a PSBT.'
+    echo "A copy of bitcoin-qt is also available at /home/$gui_user/bitcoin-qt."
     echo "If signing, save the partially signed PSBT to your transfer USB, then power off and repeat with a different signer until $M signers have signed."
     echo "After $M different signers have signed, take the completed transaction online and broadcast it from your node."
     sudo -H -u "$gui_user" env XDG_RUNTIME_DIR="/run/user/$(id -u "$gui_user")" "$CORE/bin/bitcoin-qt" -datadir="$DATA" -walletdir="$DATA/wallets" -networkactive=0 -listen=0 -wallet=signer
