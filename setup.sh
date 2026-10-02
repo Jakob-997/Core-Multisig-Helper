@@ -32,12 +32,8 @@ EOF
 warning_desktop(){
     local u=${SUDO_USER:-} uid img uri
     [[ -n $u && $u != root ]] || return 0; command -v gsettings >/dev/null || return 0
-    uid=$(id -u "$u"); img="/run/user/$uid/core-multisig-warning.svg"; uri="file://$img"
-    cat >"$img" <<'EOF'
-<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080"><rect width="100%" height="100%" fill="#8b0000"/><text x="50%" y="40%" text-anchor="middle" fill="white" font-family="sans-serif" font-weight="bold" font-size="58">DANGER — PRIVATE KEYS MAY BE PRESENT</text><text x="50%" y="50%" text-anchor="middle" fill="white" font-family="sans-serif" font-size="36">DO NOT LEAVE THIS COMPUTER UNATTENDED</text><text x="50%" y="58%" text-anchor="middle" fill="white" font-family="sans-serif" font-size="36">WHEN FINISHED: POWER OFF COMPLETELY — THIS ERASES THE RAM-ONLY WALLET STATE</text><text x="50%" y="66%" text-anchor="middle" fill="white" font-family="sans-serif" font-size="36">RETURN SIGNER DISC(S) TO SECURE STORAGE</text></svg>
-EOF
-    chown "$u:$(id -gn "$u")" "$img"
-    sudo -H -u "$u" env XDG_RUNTIME_DIR="/run/user/$uid" DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" bash -c 'gsettings set org.gnome.desktop.background picture-uri "$1"; gsettings set org.gnome.desktop.background picture-uri-dark "$1"; gsettings set org.gnome.desktop.screensaver picture-uri "$1"' _ "$uri" >/dev/null 2>&1 || true
+    uid=$(id -u "$u"); img="/run/user/$uid/core-multisig-warning.png"; install -o "$u" -g "$(id -gn "$u")" -m 644 warning.png "$img"; uri="file://$img"
+    sudo -H -u "$u" env XDG_RUNTIME_DIR="/run/user/$uid" DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" bash -c 'gsettings set org.gnome.desktop.background picture-uri "$1"; gsettings set org.gnome.desktop.background picture-uri-dark "$1"; gsettings set org.gnome.desktop.background picture-options scaled; gsettings set org.gnome.desktop.screensaver picture-uri "$1"; gsettings set org.gnome.desktop.screensaver picture-options scaled' _ "$uri" >/dev/null 2>&1 || true
 }
 
 install_core(){
