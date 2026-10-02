@@ -117,7 +117,7 @@ Everything below this point is the practical setup and spending procedure. Read 
   - **USB 1:** verified Ubuntu 26.04.1 x86-64 Desktop Live.
   - **USB 2:** the verified Core Multisig Helper release and, later, PSBT transfer.
 - A CD/DVD writer/reader available as `/dev/sr0`.
-- **N + 1 blank CD-Rs**. For long-term storage, prefer **archival-grade gold CD-R media**, which is designed for greater durability and resistance to oxidation than ordinary CD-Rs.
+- **N + 1 blank CD-Rs**. Regular CD-R media is acceptable for this workflow; some sources and manufacturers cite multi-decade archival lifetimes under good storage conditions. For the most durable option, prefer **archival-grade gold CD-R media**, which is designed for greater resistance to oxidation and long-term degradation. Regardless of media type, a conservative practice is to copy each backup to a fresh disc about every **5 years** and verify the new copy before retiring the old one.
 - A permanent marker.
 - An online Bitcoin wallet/node for creating PSBTs and broadcasting transactions.
 
