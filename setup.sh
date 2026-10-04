@@ -29,6 +29,50 @@ EOF
     [[ $MODE == generate ]] && echo 'AIRGAP ACTIVE — networking disabled before key generation.' || echo 'AIRGAP ACTIVE — networking disabled before signer wallet loading.'
 }
 
+verify_core_release(){
+    local verify_dir manifest canonical expected actual signer key sig fingerprint imported gpg_home
+    verify_dir="$PWD/verification/bitcoin-core-32.0rc2"
+    manifest="$verify_dir/SHA256SUMS"
+    canonical='bitcoin-32.0rc2-x86_64-linux-gnu.tar.gz'
+
+    [[ -f bitcoin-core.tar.gz ]] || die 'Missing bundled Bitcoin Core archive: bitcoin-core.tar.gz'
+    [[ -f "$manifest" ]] || die 'Missing signed Bitcoin Core checksum manifest.'
+
+    while IFS='|' read -r signer key sig fingerprint; do
+        [[ -f "$verify_dir/keys/$key" ]] || die "Missing trusted Bitcoin Core key for $signer."
+        [[ -f "$verify_dir/signatures/$sig" ]] || die "Missing Bitcoin Core signature from $signer."
+
+        gpg_home=$(mktemp -d /dev/shm/cmh-gpg.XXXXXX) || die 'Could not create temporary GPG keyring.'
+        chmod 700 "$gpg_home"
+        gpg --batch --quiet --homedir "$gpg_home" --import "$verify_dir/keys/$key" >/dev/null 2>&1 || {
+            rm -rf -- "$gpg_home"
+            die "Could not import trusted Bitcoin Core key for $signer."
+        }
+        imported=$(gpg --batch --homedir "$gpg_home" --with-colons --fingerprint 2>/dev/null | awk -F: '$1=="fpr"{print $10; exit}')
+        [[ "$imported" == "$fingerprint" ]] || {
+            rm -rf -- "$gpg_home"
+            die "Trusted Bitcoin Core key fingerprint mismatch for $signer."
+        }
+        gpg --batch --quiet --homedir "$gpg_home" --verify "$verify_dir/signatures/$sig" "$manifest" >/dev/null 2>&1 || {
+            rm -rf -- "$gpg_home"
+            die "Bitcoin Core checksum signature verification failed for $signer."
+        }
+        rm -rf -- "$gpg_home"
+    done <<'EOF'
+achow101|achow101.asc|achow101.asc|F52812300785C96444D3334D17565732E08E5E41
+benthecarman|benthecarman.asc|benthecarman.asc|0AD83877C1F0CD1EE9BD660AD7CC770B81FD22A8
+hebasto|hebasto.asc|hebasto.asc|D1DBF2C4B96F2DEBF4C16654410108112E7EA81F
+EOF
+
+    expected=$(awk -v name="$canonical" '$2==name {print $1}' "$manifest")
+    [[ "$expected" =~ ^[0-9a-f]{64}$ ]] || die 'Signed Bitcoin Core checksum manifest does not contain the expected x86-64 archive.'
+    [[ $(awk -v name="$canonical" '$2==name {n++} END{print n+0}' "$manifest") -eq 1 ]] || die 'Signed Bitcoin Core checksum manifest contains a duplicate archive entry.'
+    actual=$(sha256sum bitcoin-core.tar.gz | awk '{print $1}')
+    [[ "$actual" == "$expected" ]] || die 'Bundled Bitcoin Core archive does not match the signed Bitcoin Core checksum.'
+
+    echo 'Bitcoin Core release verified: 3 trusted builder signatures + SHA256.'
+}
+
 warning_desktop(){
     local u=${SUDO_USER:-} uid img uri
     [[ -n $u && $u != root ]] || return 0; command -v gsettings >/dev/null || return 0
@@ -141,7 +185,7 @@ read -rp 'Select mode: generate or spend: ' MODE </dev/tty
 [[ $MODE == generate || $MODE == spend ]] || die 'Enter exactly: generate or spend.'
 [[ ! -e $STATE ]] || { [[ $MODE == generate ]] || die 'Existing Core Multisig Helper state. If you just generated a wallet, reboot into a fresh Ubuntu Live session before spending; spend mode is intentionally fresh-session only.'; rpc getblockchaininfo >/dev/null 2>&1 && die 'A Core Multisig Helper wallet is still running. Finish it or reboot before generating another.'; read -rp 'WARNING: A previous Core Multisig Helper wallet was detected. Type NEW to permanently delete it and create a completely new wallet. Old CDs/backups belong to the old wallet and MUST NOT be mixed with the new one: ' RESET </dev/tty; [[ $RESET == NEW ]] || die 'Canceled.'; rm -rf -- "$STATE"; }
 [[ $(uname -m) == x86_64 ]] || die 'Requires an x86-64 (amd64) computer.'
-for c in nft rfkill ip systemctl swapoff sha256sum findmnt; do command -v "$c" >/dev/null || die "Missing $c."; done
+for c in nft rfkill ip systemctl swapoff sha256sum findmnt gpg awk mktemp; do command -v "$c" >/dev/null || die "Missing $c."; done
 
 if [[ $MODE == generate ]]; then
     read -rp 'Enter multisig policy in m-n format (for example 2-4): ' MN </dev/tty
@@ -151,7 +195,7 @@ if [[ $MODE == generate ]]; then
     for c in xorriso eject jq; do command -v "$c" >/dev/null || die "Missing $c."; done
 fi
 
-echo '0255103718033e6aee15fa944717fc277e047b845bff1e7408af0ea732d8d0c1  bitcoin-core.tar.gz' | sha256sum -c - >/dev/null || die 'Bad Bitcoin Core checksum.'
+verify_core_release
 [[ $(findmnt -n -o FSTYPE /dev/shm) == tmpfs ]] || die '/dev/shm is not RAM-backed tmpfs.'
 swapoff -a
 airgap
