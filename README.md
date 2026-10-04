@@ -254,15 +254,23 @@ Then return USB 2 to the online computer and broadcast the completed transaction
 
 The repository currently includes frozen Bitcoin Core **32.0rc2 x86-64 Linux**, a release-candidate build.
 
-Bitcoin Core is bundled directly with the project to make setup as simple and reproducible as possible, with no additional Core download required during use. I verified the bundled Bitcoin Core archive against the signatures and hashes published by Bitcoin Core maintainers. Anyone who wants to independently verify it can do the same before using the release.
+Bitcoin Core is bundled directly with the project to make setup as simple and reproducible as possible, with no additional Core download required during use.
 
-SHA256:
+Before extracting or starting Core, the helper now verifies the bundled release using the Bitcoin Core Guix release attestations included under `verification/bitcoin-core-32.0rc2/`:
+
+1. It imports three pinned Bitcoin Core builder public keys into temporary RAM-only GPG keyrings.
+2. It checks each imported key against a hardcoded expected fingerprint.
+3. It requires valid detached signatures from **achow101 (Andrew Chow)**, **benthecarman (Ben Carman)**, and **hebasto (Hennadii Stepanov)** over the same `SHA256SUMS` manifest.
+4. It reads the expected digest for `bitcoin-32.0rc2-x86_64-linux-gnu.tar.gz` from that authenticated manifest.
+5. It hashes the locally bundled, renamed `bitcoin-core.tar.gz` and requires an exact match before extraction.
+
+The expected archive digest in the signed manifest is:
 
 ```text
 0255103718033e6aee15fa944717fc277e047b845bff1e7408af0ea732d8d0c1
 ```
 
-The script verifies this before starting Core.
+Any missing file, wrong key fingerprint, invalid signature, malformed manifest, duplicate archive entry, or checksum mismatch aborts setup before Bitcoin Core is used.
 
 ### Testing only
 
